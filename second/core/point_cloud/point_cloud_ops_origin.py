@@ -4,120 +4,6 @@ import numba
 import numpy as np
 
 
-# voxel_size (0.16,0.16,4) 4 is the total Z range (-3,1) !!!
-# change voxel size Z axis to evenly grids, such as 0.4 which means 4/0.4 = 10 devided Z into 10 grids
-@numba.jit(nopython=True)
-def _points_to_voxel_reverse_kernel_avg(
-                                    points,
-                                    voxel_size,
-                                    coors_range,
-                                    num_points_per_voxel,
-                                    coor_to_voxelidx,
-                                    voxels,
-                                    coors,
-                                    max_points=4,
-                                    max_voxels=200000):
-    # put all computations to one loop.
-    # we shouldn't create large array in main jit code, otherwise
-    # reduce performance
-    N = points.shape[0]
-    # ndim = points.shape[1] - 1
-    ndim = 3
-    ndim_minus_1 = ndim - 1
-    grid_size = (coors_range[3:] - coors_range[:3]) / voxel_size
-    # np.round(grid_size)
-    # grid_size = np.round(grid_size).astype(np.int64)(np.int32)
-    grid_size = np.round(grid_size, 0, grid_size).astype(np.int32)
-    coor = np.zeros(shape=(3, ), dtype=np.int32)
-    voxel_num = 0
-    failed = False
-    for i in range(N):
-        failed = False
-        for j in range(ndim):
-            c = np.floor((points[i, j] - coors_range[j]) / voxel_size[j])
-            if c < 0 or c >= grid_size[j]:
-                failed = True
-                break
-            coor[ndim_minus_1 - j] = c # inverse!!!!!! coor[0] = z, coor[1] = y, coor[2] = x
-        if failed:
-            continue
-        voxelidx = coor_to_voxelidx[coor[0], coor[1], coor[2]] # coor_to_voxelidx value is -1
-        if voxelidx == -1:
-            voxelidx = voxel_num
-            if voxel_num >= max_voxels:
-                break
-            voxel_num += 1
-            #place the point to corespoding index
-            coor_to_voxelidx[coor[0], coor[1], coor[2]] = voxelidx # assign voxelid(voxel_num) to coor_to_voxelid[z,y,x]
-            coors[voxelidx] = coor
-        num = num_points_per_voxel[voxelidx]
-
-        if num < max_points:
-            voxels[voxelidx, num] = points[i]
-            num_points_per_voxel[voxelidx] += 1
-
-    ## ############################ Voxel -> Pillar ############################
-
-    coors = coors[:voxel_num]
-    voxels = voxels[:voxel_num]
-    num_points_per_voxel = num_points_per_voxel[:voxel_num]
-
-    ############################# V1 ###########################################
-
-    pillar_xy_plane = coors[:,1:] # all the xy plane coordinates
-    pillar_coors = np.unique(pillar_xy_plane, axis=0) # get unique xy plane
-
-    max_pillars = len(pillar_coors)
-    max_points_per_pillar = max_points * grid_size[2] # grids_size[2] equal z grid size
-
-    pillars = np.zeros(shape=(max_pillars, max_points_per_pillar, points.shape[-1]), dtype=points.dtype)
-    pillars_coors = np.zeros(shape=(max_pillars, 3), dtype=np.int32)
-    num_points_per_pillar = np.zeros(shape=(max_pillars, ), dtype=np.int32)
-
-    for p_index, pillar_c in enumerate(pillar_coors):
-        pillar_voxel_index = pillar_xy_plane == pillar_c
-        pillar_voxel_index = np.logical_and(pillar_voxel_index[:,0], pillar_voxel_index[:,1]) # logical and [y,x]
-
-        pillars_coors[p_index] = np.array([0, pillar_c[0], pillar_c[1]]) # z,y,x
-        pillars[p_index] = voxels[pillar_voxel_index].reshape(-1, points.shape[-1])
-        num_points_per_pillar[p_index] = np.sum(num_points_per_voxel[pillar_voxel_index])
-
-
-    ############################# V2 ###########################################
-    # print(coors.shape)
-    # print(voxels.shape)
-    #
-    # x_shape = coor_to_voxelidx.shape[2] #x
-    # y_shape = coor_to_voxelidx.shape[1] #y
-    # print("[debug] total shape: ", x_shape*y_shape)
-    #
-    # max_pillars = x_shape*y_shape
-    # max_points_per_pillar = max_points * grid_size[2]
-    # print("[debug] max_pillars: ", max_pillars)
-    #
-    # pillars = np.zeros(shape=(max_pillars, max_points_per_pillar, points.shape[-1]), dtype=points.dtype)
-    # pillars_coors = np.zeros(shape=(max_pillars, 3), dtype=np.int32)
-    # num_points_per_pillar = np.zeros(shape=(max_pillars, ), dtype=np.int32)
-    #
-    # pillar_index = 0
-    # for i in range (x_shape):
-    #     for j in range(y_shape):
-    #         voxel_to_pillar_index = coor_to_voxelidx[:,j,i]
-    #         # print("[debug] voxel_to_pillar_index length: ", voxel_to_pillar_index.shape)
-    #         # print("[debug] voxel_to_pillar_index: ", voxel_to_pillar_index.)
-    #         # print("[debug] voxel_to_pillar_index_shape: ", voxel_to_pillar_index.shape)
-    #         # print("[debug] voxels[voxel_to_pillar_index]: ", voxels[voxel_to_pillar_index].shape)
-    #         pillars[pillar_index] = voxels[voxel_to_pillar_index].reshape(max_points_per_pillar, points.shape[-1])
-    #         # # print("[debug] coors[voxel_to_pillar_index] shape : ", coors[voxel_to_pillar_index].shape)
-    #         pillars_coors[pillar_index] = np.array([0,j,i])
-    #         # # print("num_points_per_pillar[pillar_index] : ", num_points_per_voxel[voxel_to_pillar_index])
-    #         num_points_per_pillar[pillar_index] = np.sum(num_points_per_voxel[voxel_to_pillar_index])
-    #         #
-    #         pillar_index +=1
-    #         # print(pillar_index)
-    # print("[debug] out of loop")
-    return pillars, pillars_coors, num_points_per_pillar
-
 @numba.jit(nopython=True)
 def _points_to_voxel_reverse_kernel(points,
                                     voxel_size,
@@ -174,8 +60,8 @@ def _points_to_voxel_kernel(points,
                             coor_to_voxelidx,
                             voxels,
                             coors,
-                            max_points= 4, # for averge sampling change max_points to 4
-                            max_voxels= 200000): # for averge sampling change max_voxels = 200000
+                            max_points=35,
+                            max_voxels=20000):
     # need mutex if write in cuda, but numba.cuda don't support mutex.
     # in addition, pytorch don't support cuda in dataloader(tensorflow support this).
     # put all computations to one loop.
@@ -196,12 +82,11 @@ def _points_to_voxel_kernel(points,
     for i in range(N):
         failed = False
         for j in range(ndim):
-            #the index of each points respectively
             c = np.floor((points[i, j] - coors_range[j]) / voxel_size[j])
             if c < 0 or c >= grid_size[j]:
                 failed = True
                 break
-            coor[j] = c #map index [index_x,index_y,index_z]
+            coor[j] = c
         if failed:
             continue
         voxelidx = coor_to_voxelidx[coor[0], coor[1], coor[2]]
@@ -210,20 +95,10 @@ def _points_to_voxel_kernel(points,
             if voxel_num >= max_voxels:
                 break
             voxel_num += 1
-            coor_to_voxelidx[coor[0], coor[1], coor[2]] = voxelidx # assgin voxel index to coor_to_voxelidx
+            coor_to_voxelidx[coor[0], coor[1], coor[2]] = voxelidx
             coors[voxelidx] = coor
         num = num_points_per_voxel[voxelidx]
-
         if num < max_points:
-            """
-            max_voxels = 6000+
-            max_points = 35 or 100
-            points = number of features (3 -> xyz)
-            voxels = np.zeros(max_voxels, max_points, points.shape[-1])
-            voxels init with (M,N,4) -> fill with points[i] (x,y,z)
-            put point to the coresponding index of voxel of the number of points
-
-            """
             voxels[voxelidx, num] = points[i]
             num_points_per_voxel[voxelidx] += 1
     return voxel_num
@@ -232,11 +107,11 @@ def _points_to_voxel_kernel(points,
 def points_to_voxel(points,
                      voxel_size,
                      coors_range,
-                     max_points=4, # for averge sampling change max_points to 4
+                     max_points=35,
                      reverse_index=True,
-                     max_voxels=200000): # for averge sampling change max_voxels = 200000
+                     max_voxels=20000):
     """convert kitti points(N, >=3) to voxels. This version calculate
-    everything in one loop. now it takes only 4.2ms(complete point cloud)
+    everything in one loop. now it takes only 4.2ms(complete point cloud) 
     with jit and 3.2ghz cpu.(don't calculate other features)
     Note: this function in ubuntu seems faster than windows 10.
 
@@ -248,7 +123,7 @@ def points_to_voxel(points,
             format: xyzxyz, minmax
         max_points: int. indicate maximum points contained in a voxel.
         reverse_index: boolean. indicate whether return reversed coordinates.
-            if points has xyz format and reverse_index is True, output
+            if points has xyz format and reverse_index is True, output 
             coordinates will be zyx format, but points in features always
             xyz format.
         max_voxels: int. indicate maximum voxels this function create.
@@ -275,7 +150,7 @@ def points_to_voxel(points,
         shape=(max_voxels, max_points, points.shape[-1]), dtype=points.dtype)
     coors = np.zeros(shape=(max_voxels, 3), dtype=np.int32)
     if reverse_index:
-        pillars, pillars_coors, num_points_per_pillar = _points_to_voxel_reverse_kernel_avg(
+        voxel_num = _points_to_voxel_reverse_kernel(
             points, voxel_size, coors_range, num_points_per_voxel,
             coor_to_voxelidx, voxels, coors, max_points, max_voxels)
 
@@ -284,13 +159,12 @@ def points_to_voxel(points,
             points, voxel_size, coors_range, num_points_per_voxel,
             coor_to_voxelidx, voxels, coors, max_points, max_voxels)
 
-    return pillars, pillars_coors, num_points_per_pillar
-    # coors = coors[:voxel_num]
-    # voxels = voxels[:voxel_num]
-    # num_points_per_voxel = num_points_per_voxel[:voxel_num]
+    coors = coors[:voxel_num]
+    voxels = voxels[:voxel_num]
+    num_points_per_voxel = num_points_per_voxel[:voxel_num]
     # voxels[:, :, -3:] = voxels[:, :, :3] - \
     #     voxels[:, :, :3].sum(axis=1, keepdims=True)/num_points_per_voxel.reshape(-1, 1, 1)
-    # return voxels, coors, num_points_per_voxel
+    return voxels, coors, num_points_per_voxel
 
 
 @numba.jit(nopython=True)
