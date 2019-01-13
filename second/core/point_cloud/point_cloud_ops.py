@@ -82,6 +82,9 @@ def _points_to_voxel_reverse_kernel_avg(
         pillars[p_index] = voxels[pillar_voxel_index].reshape(-1, points.shape[-1])
         num_points_per_pillar[p_index] = np.sum(num_points_per_voxel[pillar_voxel_index])
 
+    print("[debug] pillars : ",pillars)
+    print("[debug] pillars_coors : ", pillars_coors)
+    print("[debug] num_points_per_pillar : ", num_points_per_pillar)
 
     ############################# V2 ###########################################
     # print(coors.shape)
