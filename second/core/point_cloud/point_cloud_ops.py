@@ -263,6 +263,7 @@ def points_to_voxel(points,
         coordinates: [M, 3] int32 tensor.
         num_points_per_voxel: [M] int32 tensor.
     """
+    print("###### points_to_voxel runing !!!!")
     if not isinstance(voxel_size, np.ndarray):
         voxel_size = np.array(voxel_size, dtype=points.dtype)
     if not isinstance(coors_range, np.ndarray):
@@ -277,6 +278,7 @@ def points_to_voxel(points,
     voxels = np.zeros(
         shape=(max_voxels, max_points, points.shape[-1]), dtype=points.dtype)
     coors = np.zeros(shape=(max_voxels, 3), dtype=np.int32)
+    print("run here")
     if reverse_index:
         pillars, pillars_coors, num_points_per_pillar = _points_to_voxel_reverse_kernel_avg(
             points, voxel_size, coors_range, num_points_per_voxel,

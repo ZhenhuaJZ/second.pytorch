@@ -165,7 +165,7 @@ def train(config_path,
     ######################
     # PREPARE INPUT
     ######################
-
+    print("#### PREPARE INPUT")
     dataset = input_reader_builder.build(
         input_cfg,
         model_cfg,
