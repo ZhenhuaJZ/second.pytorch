@@ -65,6 +65,7 @@ def _points_to_voxel_reverse_kernel_avg(
     ############################# V1 ###########################################
 
     pillar_xy_plane = coors[:,1:] # all the xy plane coordinates
+    print(pillar_xy_plane)
     pillar_coors = np.unique(pillar_xy_plane, axis=0) # get unique xy plane
 
     max_pillars = len(pillar_coors)
