@@ -120,7 +120,8 @@ def _points_to_voxel_reverse_kernel_avg(
     #         pillar_index +=1
     #         # print(pillar_index)
     # print("[debug] out of loop")
-    return pillars, pillars_coors, num_points_per_pillar
+    return
+    # return pillars, pillars_coors, num_points_per_pillar
 
 @numba.jit(nopython=True)
 def _points_to_voxel_reverse_kernel(points,
