@@ -66,26 +66,26 @@ def _points_to_voxel_reverse_kernel_avg(
 
     pillar_xy_plane = coors[:,1:] # all the xy plane coordinates
     print(pillar_xy_plane)
-    pillar_coors = np.unique(pillar_xy_plane, axis=0) # get unique xy plane
-
-    max_pillars = len(pillar_coors)
-    max_points_per_pillar = max_points * grid_size[2] # grids_size[2] equal z grid size
-
-    pillars = np.zeros(shape=(max_pillars, max_points_per_pillar, points.shape[-1]), dtype=points.dtype)
-    pillars_coors = np.zeros(shape=(max_pillars, 3), dtype=np.int32)
-    num_points_per_pillar = np.zeros(shape=(max_pillars, ), dtype=np.int32)
-
-    for p_index, pillar_c in enumerate(pillar_coors):
-        pillar_voxel_index = pillar_xy_plane == pillar_c
-        pillar_voxel_index = np.logical_and(pillar_voxel_index[:,0], pillar_voxel_index[:,1]) # logical and [y,x]
-
-        pillars_coors[p_index] = np.array([0, pillar_c[0], pillar_c[1]]) # z,y,x
-        pillars[p_index] = voxels[pillar_voxel_index].reshape(-1, points.shape[-1])
-        num_points_per_pillar[p_index] = np.sum(num_points_per_voxel[pillar_voxel_index])
-
-    print("[debug] pillars : ",pillars)
-    print("[debug] pillars_coors : ", pillars_coors)
-    print("[debug] num_points_per_pillar : ", num_points_per_pillar)
+    # pillar_coors = np.unique(pillar_xy_plane, axis=0) # get unique xy plane
+    #
+    # max_pillars = len(pillar_coors)
+    # max_points_per_pillar = max_points * grid_size[2] # grids_size[2] equal z grid size
+    #
+    # pillars = np.zeros(shape=(max_pillars, max_points_per_pillar, points.shape[-1]), dtype=points.dtype)
+    # pillars_coors = np.zeros(shape=(max_pillars, 3), dtype=np.int32)
+    # num_points_per_pillar = np.zeros(shape=(max_pillars, ), dtype=np.int32)
+    #
+    # for p_index, pillar_c in enumerate(pillar_coors):
+    #     pillar_voxel_index = pillar_xy_plane == pillar_c
+    #     pillar_voxel_index = np.logical_and(pillar_voxel_index[:,0], pillar_voxel_index[:,1]) # logical and [y,x]
+    #
+    #     pillars_coors[p_index] = np.array([0, pillar_c[0], pillar_c[1]]) # z,y,x
+    #     pillars[p_index] = voxels[pillar_voxel_index].reshape(-1, points.shape[-1])
+    #     num_points_per_pillar[p_index] = np.sum(num_points_per_voxel[pillar_voxel_index])
+    #
+    # print("[debug] pillars : ",pillars)
+    # print("[debug] pillars_coors : ", pillars_coors)
+    # print("[debug] num_points_per_pillar : ", num_points_per_pillar)
 
     ############################# V2 ###########################################
     # print(coors.shape)
