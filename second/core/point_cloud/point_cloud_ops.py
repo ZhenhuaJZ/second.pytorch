@@ -56,18 +56,21 @@ def _points_to_voxel_reverse_kernel_avg(
             voxels[voxelidx, num] = points[i]
             num_points_per_voxel[voxelidx] += 1
 
+    return voxel_num
+    
     ## ############################ Voxel -> Pillar ############################
 
-    coors = coors[:voxel_num]
-    voxels = voxels[:voxel_num]
-    num_points_per_voxel = num_points_per_voxel[:voxel_num]
+    # coors = coors[:voxel_num] # coors --> loacation
+    # voxels = voxels[:voxel_num] # voxels -> points
+    # num_points_per_voxel = num_points_per_voxel[:voxel_num]
 
     ############################# V1 ###########################################
 
-    pillar_xy_plane = coors[:,1:] # all the xy plane coordinates
-    pillar_coors = np.unique(pillar_xy_plane, axis=0) # get unique xy plane
-    print("runed -- leo")
-    print(pillar_coors)
+    # pillar_xy_plane = coors[:,1:] # all the xy plane coordinates
+    # unique(pillar_xy_plane)
+    # pillar_coors = np.unique(pillar_xy_plane, axis=0) # get unique xy plane
+    # print("runed -- leo")
+    # print(pillar_coors)
     #
     # max_pillars = len(pillar_coors)
     # max_points_per_pillar = max_points * grid_size[2] # grids_size[2] equal z grid size
@@ -121,7 +124,6 @@ def _points_to_voxel_reverse_kernel_avg(
     #         pillar_index +=1
     #         # print(pillar_index)
     # print("[debug] out of loop")
-    return
     # return pillars, pillars_coors, num_points_per_pillar
 
 @numba.jit(nopython=True)
@@ -281,7 +283,7 @@ def points_to_voxel(points,
         shape=(max_voxels, max_points, points.shape[-1]), dtype=points.dtype)
     coors = np.zeros(shape=(max_voxels, 3), dtype=np.int32)
     if reverse_index:
-        pillars, pillars_coors, num_points_per_pillar = _points_to_voxel_reverse_kernel_avg(
+        voxel_num = _points_to_voxel_reverse_kernel_avg(
             points, voxel_size, coors_range, num_points_per_voxel,
             coor_to_voxelidx, voxels, coors, max_points, max_voxels)
 
@@ -290,10 +292,29 @@ def points_to_voxel(points,
             points, voxel_size, coors_range, num_points_per_voxel,
             coor_to_voxelidx, voxels, coors, max_points, max_voxels)
 
+    coors = coors[:voxel_num]
+    voxels = voxels[:voxel_num]
+    num_points_per_voxel = num_points_per_voxel[:voxel_num]
+
+    pillar_xy_plane = coors[:,1:] # x,y plane ignore z axis
+    pillar_coors = np.unique(pillar_xy_plane, axis=0)
+
+    max_pillars = len(pillar_coors)
+    max_points_per_pillar = max_points * grid_size[2] # grid_size[2] is Z (not reversed)
+
+    pillars = np.zeros(shape=(max_pillars, max_points_per_pillar, points.shape[-1]), dtype=points.dtype)
+    pillars_coors = np.zeros(shape=(max_pillars, 3), dtype=np.int32)
+    num_points_per_pillar = np.zeros(shape=(max_pillars, ), dtype=np.int32)
+
+    for p_index, pillar_c in enumerate(pillar_coors):
+        voxel_to_pillar_index = pillar_xy_plane == pillar_c
+        voxel_to_pillar_index = np.logical_and(voxel_to_pillar_index[:,0], voxel_to_pillar_index[:,1]) # logical and [y,x]
+
+        pillars_coors[p_index] = np.array([0, pillar_c[0], pillar_c[1]]) # z,y,x
+        pillars[p_index] = voxels[pillar_voxel_index].reshape(-1, points.shape[-1])
+        num_points_per_pillar[p_index] = np.sum(num_points_per_voxel[pillar_voxel_index])
+
     return pillars, pillars_coors, num_points_per_pillar
-    # coors = coors[:voxel_num]
-    # voxels = voxels[:voxel_num]
-    # num_points_per_voxel = num_points_per_voxel[:voxel_num]
     # voxels[:, :, -3:] = voxels[:, :, :3] - \
     #     voxels[:, :, :3].sum(axis=1, keepdims=True)/num_points_per_voxel.reshape(-1, 1, 1)
     # return voxels, coors, num_points_per_voxel
