@@ -2,6 +2,32 @@ import time
 
 import numba
 import numpy as np
+import pcl
+import pcl.pcl_visualization
+
+def pcl_viewer(points):
+    if points.shape[1] > 3:
+        p_cloud = pcl.PointCloud_PointXYZI()
+        p_cloud.from_array(points[:,:3])
+    else:
+        p_cloud = pcl.PointCloud_pointXYZ()
+        p_cloud.from_array(points[:,:2])
+    viewer = pcl.pcl_visualization.CloudViewing()
+    viewer.ShowGrayCloud(p_cloud)
+    flag = True
+    while flag:
+        flag = not viewer.WasStopped()
+
+# def _points_to_voxel_dense_sample(points,
+#                                     voxel_size,
+#                                     coors_range,
+#                                     num_points_per_voxel,
+#                                     coor_to_voxelidx,
+#                                     voxels,
+#                                     coors,
+#                                     max_points=35,
+#                                     max_voxels=20000):
+#     # sample most dense section of the voxel
 
 
 @numba.jit(nopython=True)
@@ -31,19 +57,26 @@ def _points_to_voxel_reverse_kernel(points,
     for i in range(N):
         failed = False
         for j in range(ndim):
+            # get xyz into voxel coordinates
             c = np.floor((points[i, j] - coors_range[j]) / voxel_size[j])
             if c < 0 or c >= grid_size[j]:
                 failed = True
                 break
+            # reverse voxel coordinate
             coor[ndim_minus_1 - j] = c
         if failed:
             continue
+        # Obtain voxel coordinate voxel index
+        # Voxel index is only to monitor if the voxel is assigned
         voxelidx = coor_to_voxelidx[coor[0], coor[1], coor[2]]
+        # if index not exist
         if voxelidx == -1:
+            # Assign voxel index in order
             voxelidx = voxel_num
             if voxel_num >= max_voxels:
                 break
             voxel_num += 1
+            # Assign index to voxel coordinate
             coor_to_voxelidx[coor[0], coor[1], coor[2]] = voxelidx
             coors[voxelidx] = coor
         num = num_points_per_voxel[voxelidx]
@@ -111,7 +144,7 @@ def points_to_voxel(points,
                      reverse_index=True,
                      max_voxels=20000):
     """convert kitti points(N, >=3) to voxels. This version calculate
-    everything in one loop. now it takes only 4.2ms(complete point cloud) 
+    everything in one loop. now it takes only 4.2ms(complete point cloud)
     with jit and 3.2ghz cpu.(don't calculate other features)
     Note: this function in ubuntu seems faster than windows 10.
 
@@ -123,7 +156,7 @@ def points_to_voxel(points,
             format: xyzxyz, minmax
         max_points: int. indicate maximum points contained in a voxel.
         reverse_index: boolean. indicate whether return reversed coordinates.
-            if points has xyz format and reverse_index is True, output 
+            if points has xyz format and reverse_index is True, output
             coordinates will be zyx format, but points in features always
             xyz format.
         max_voxels: int. indicate maximum voxels this function create.
@@ -135,6 +168,7 @@ def points_to_voxel(points,
         coordinates: [M, 3] int32 tensor.
         num_points_per_voxel: [M] int32 tensor.
     """
+    pcl_viewer(points)
     if not isinstance(voxel_size, np.ndarray):
         voxel_size = np.array(voxel_size, dtype=points.dtype)
     if not isinstance(coors_range, np.ndarray):
@@ -150,6 +184,7 @@ def points_to_voxel(points,
         shape=(max_voxels, max_points, points.shape[-1]), dtype=points.dtype)
     coors = np.zeros(shape=(max_voxels, 3), dtype=np.int32)
     if reverse_index:
+        # Ran here
         voxel_num = _points_to_voxel_reverse_kernel(
             points, voxel_size, coors_range, num_points_per_voxel,
             coor_to_voxelidx, voxels, coors, max_points, max_voxels)
@@ -158,9 +193,10 @@ def points_to_voxel(points,
         voxel_num = _points_to_voxel_kernel(
             points, voxel_size, coors_range, num_points_per_voxel,
             coor_to_voxelidx, voxels, coors, max_points, max_voxels)
-
     coors = coors[:voxel_num]
     voxels = voxels[:voxel_num]
+    print(voxels.shape)
+    pcl_viewer(voxels.reshape(voxel_num*max_points,points.shape[-1]))
     num_points_per_voxel = num_points_per_voxel[:voxel_num]
     # voxels[:, :, -3:] = voxels[:, :, :3] - \
     #     voxels[:, :, :3].sum(axis=1, keepdims=True)/num_points_per_voxel.reshape(-1, 1, 1)
