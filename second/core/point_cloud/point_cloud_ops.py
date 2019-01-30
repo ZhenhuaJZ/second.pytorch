@@ -315,8 +315,8 @@ def points_to_voxel(points,
         voxel_to_pillar_index = np.logical_and(voxel_to_pillar_index[:,0], voxel_to_pillar_index[:,1]) # logical and [y,x]
 
         pillars_coors[p_index] = np.array([0, pillar_c[0], pillar_c[1]]) # z,y,x
-        pillars[p_index] = voxels[pillar_voxel_index].reshape(-1, points.shape[-1])
-        num_points_per_pillar[p_index] = np.sum(num_points_per_voxel[pillar_voxel_index])
+        pillars[p_index] = voxels[voxel_to_pillar_index].reshape(-1, points.shape[-1])
+        num_points_per_pillar[p_index] = np.sum(num_points_per_voxel[voxel_to_pillar_index])
 
     return pillars, pillars_coors, num_points_per_pillar
     # voxels[:, :, -3:] = voxels[:, :, :3] - \
