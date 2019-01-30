@@ -14,6 +14,7 @@ def _points_to_voxel_reverse_kernel(points,
                                     coors,
                                     max_points=35,
                                     max_voxels=20000):
+    print("[voxel_size: ", voxel_size)
     # put all computations to one loop.
     # we shouldn't create large array in main jit code, otherwise
     # reduce performance
