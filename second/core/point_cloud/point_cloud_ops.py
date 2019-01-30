@@ -28,6 +28,7 @@ def _points_to_voxel_reverse_kernel_avg(
     # np.round(grid_size)
     # grid_size = np.round(grid_size).astype(np.int64)(np.int32)
     grid_size = np.round(grid_size, 0, grid_size).astype(np.int32)
+    print("grid_size : ", grid_size[2])
     coor = np.zeros(shape=(3, ), dtype=np.int32)
     voxel_num = 0
     failed = False
@@ -57,7 +58,7 @@ def _points_to_voxel_reverse_kernel_avg(
             num_points_per_voxel[voxelidx] += 1
 
     return voxel_num
-    
+
     ## ############################ Voxel -> Pillar ############################
 
     # coors = coors[:voxel_num] # coors --> loacation
@@ -302,7 +303,8 @@ def points_to_voxel(points,
     pillar_coors = np.unique(pillar_xy_plane, axis=0)
 
     max_pillars = len(pillar_coors)
-    max_points_per_pillar = max_points * grid_size[2] # grid_size[2] is Z (not reversed)
+    print("[debug] :", voxelmap_shape[2])
+    max_points_per_pillar = max_points * voxelmap_shape[2] # grid_size[2] is Z (not reversed)
 
     pillars = np.zeros(shape=(max_pillars, max_points_per_pillar, points.shape[-1]), dtype=points.dtype)
     pillars_coors = np.zeros(shape=(max_pillars, 3), dtype=np.int32)
