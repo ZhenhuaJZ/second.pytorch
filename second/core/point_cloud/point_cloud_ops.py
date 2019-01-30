@@ -18,16 +18,78 @@ def pcl_viewer(points):
     while flag:
         flag = not viewer.WasStopped()
 
-# def _points_to_voxel_dense_sample(points,
-#                                     voxel_size,
-#                                     coors_range,
-#                                     num_points_per_voxel,
-#                                     coor_to_voxelidx,
-#                                     voxels,
-#                                     coors,
-#                                     max_points=35,
-#                                     max_voxels=20000):
-#     # sample most dense section of the voxel
+@numba.jit(nopython = True)
+def _points_to_voxel_dense_sample(points,
+                                    voxel_size,
+                                    coors_range,
+                                    num_points_per_voxel,
+                                    coor_to_voxelidx,
+                                    voxels,
+                                    coors,
+                                    max_points=35,
+                                    max_voxels=20000):
+    # sample most dense section of the voxel
+    print("[debug] enter dense_sample")
+    # # for each voxel
+    for voxel_idx in range(voxels):
+        # get its corresponding points exist within that voxel
+
+        # exit()
+
+
+    N = points.shape[0]
+    # ndim = points.shape[1] - 1
+    ndim = 3
+    ndim_minus_1 = ndim - 1
+    grid_size = (coors_range[3:] - coors_range[:3]) / voxel_size
+    # np.round(grid_size)
+    # grid_size = np.round(grid_size).astype(np.int64)(np.int32)
+    grid_size = np.round(grid_size, 0, grid_size).astype(np.int32)
+    coor = np.zeros(shape=(3, ), dtype=np.int32)
+    voxel_range = np.zeros(shape=(6,), dtype=np.float32)
+    mask = np.zeros(shape = (N, 3), dtype = np.bool_)
+    # voxel_points =
+    voxel_num = 0
+    failed = False
+    for i in range(N):
+        failed = False
+        for j in range(ndim):
+            # get xyz into voxel coordinates
+            c = np.floor((points[i, j] - coors_range[j]) / voxel_size[j])
+            if c < 0 or c >= grid_size[j]:
+                failed = True
+                break
+            # Obtain range of the voxel
+            voxel_range[j] = c * voxel_size[j] + coors_range[j]
+            voxel_range[j + 3] = c * voxel_size[j] + voxel_size[j] + coors_range[j]
+            # print(voxel_range)
+            # reverse voxel coordinate
+            coor[ndim_minus_1 - j] = c
+        if failed:
+            continue
+        voxelidx = coor_to_voxelidx[coor[0], coor[1], coor[2]]
+        if voxelidx == -1:
+            # Assign voxel index in order
+            voxelidx = voxel_num
+            if voxel_num >= max_voxels:
+                break
+            voxel_num += 1
+            # Assign index to voxel coordinate
+            coor_to_voxelidx[coor[0], coor[1], coor[2]] = voxelidx
+            coors[voxelidx] = coor
+            # Obtain points within the voxel from voxel range
+            mask = ((points[:,:3] >= voxel_range[:3]) & (points[:,:3] <= voxel_range[3:]))
+            mask = (mask[:,0]*mask[:,1]*mask[:,2])#.astype(np.bool)
+            # mask = np.isin(points,voxel_range[:3])
+            val = points[mask,:]
+            if len(val) > 100:
+                print(val.shape)
+            index = val.shape[0]
+            # for i in range(index):
+            #     for i in range(index):
+            #
+            # print(voxel_points)
+
 
 
 @numba.jit(nopython=True)
@@ -168,7 +230,7 @@ def points_to_voxel(points,
         coordinates: [M, 3] int32 tensor.
         num_points_per_voxel: [M] int32 tensor.
     """
-    pcl_viewer(points)
+    # pcl_viewer(points)
     if not isinstance(voxel_size, np.ndarray):
         voxel_size = np.array(voxel_size, dtype=points.dtype)
     if not isinstance(coors_range, np.ndarray):
@@ -185,7 +247,7 @@ def points_to_voxel(points,
     coors = np.zeros(shape=(max_voxels, 3), dtype=np.int32)
     if reverse_index:
         # Ran here
-        voxel_num = _points_to_voxel_reverse_kernel(
+        voxel_num = _points_to_voxel_dense_sample(
             points, voxel_size, coors_range, num_points_per_voxel,
             coor_to_voxelidx, voxels, coors, max_points, max_voxels)
 
@@ -195,8 +257,8 @@ def points_to_voxel(points,
             coor_to_voxelidx, voxels, coors, max_points, max_voxels)
     coors = coors[:voxel_num]
     voxels = voxels[:voxel_num]
-    print(voxels.shape)
-    pcl_viewer(voxels.reshape(voxel_num*max_points,points.shape[-1]))
+    # print(voxels.shape)
+    # pcl_viewer(voxel  s.reshape(voxel_num*max_points,points.shape[-1]))
     num_points_per_voxel = num_points_per_voxel[:voxel_num]
     # voxels[:, :, -3:] = voxels[:, :, :3] - \
     #     voxels[:, :, :3].sum(axis=1, keepdims=True)/num_points_per_voxel.reshape(-1, 1, 1)
