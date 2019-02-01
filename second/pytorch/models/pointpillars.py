@@ -7,7 +7,7 @@ Licensed under MIT License [see LICENSE].
 import torch
 from torch import nn
 from torch.nn import functional as F
-
+import numpy as np
 from second.pytorch.utils import get_paddings_indicator
 from torchplus.nn import Empty
 from torchplus.tools import change_default_args
@@ -47,7 +47,6 @@ class PFNLayer(nn.Module):
         self.norm = BatchNorm1d(self.units)
 
     def forward(self, inputs):
-
         x = self.linear(inputs)
         x = self.norm(x.permute(0, 2, 1).contiguous()).permute(0, 2, 1).contiguous()
         x = F.relu(x)
@@ -110,22 +109,34 @@ class PillarFeatureNet(nn.Module):
         self.y_offset = self.vy / 2 + pc_range[1]
 
     def forward(self, features, num_voxels, coors):
-
+        # print("*"*20)
+        # print("[debug] init Feat: ", np.unique(np.isnan(features.cpu().numpy())))
         # Find distance of x, y, and z from cluster center
+        # print("[debug] feature shape_1: ", np.unique(np.isnan(features[:, :, :3].sum(dim=1, keepdim=True).cpu().numpy())))
+        # print("[debug] feature shape_1: ", features[:, :, :3].sum(dim=1, keepdim=True).shape)
+        # print("[debug] num_voxels shape_2: ", np.unique(np.isnan(num_voxels.type_as(features).view(-1, 1, 1).cpu().numpy())))
+        # print("[debug] num_voxels unique: ", np.unique(num_voxels.type_as(features).view(-1, 1, 1).cpu().numpy()))
+        # print("[debug] num_voxels shape: ", num_voxels.type_as(features).shape)
         points_mean = features[:, :, :3].sum(dim=1, keepdim=True) / num_voxels.type_as(features).view(-1, 1, 1)
+        # print("[debug] aft Mean: ",np.unique(np.isnan(features.cpu().numpy())))
         f_cluster = features[:, :, :3] - points_mean
+        # print("[debug] points_mean: ", np.unique(np.isnan(points_mean.cpu().numpy())))
+        # print("[debug] features[:, :, :3] : ", np.unique(np.isnan(features[:, :, :3].cpu().numpy())))
+        # print("[debug] aft f_cluster: ",np.unique(np.isnan(f_cluster.cpu().numpy())))
 
         # Find distance of x, y, and z from pillar center
         f_center = features[:, :, :2]
         f_center[:, :, 0] = f_center[:, :, 0] - (coors[:, 3].float().unsqueeze(1) * self.vx + self.x_offset)
         f_center[:, :, 1] = f_center[:, :, 1] - (coors[:, 2].float().unsqueeze(1) * self.vy + self.y_offset)
-
+        # print("[debug] aft f_center: ",np.unique(np.isnan(f_center.cpu().numpy())))
         # Combine together feature decorations
         features_ls = [features, f_cluster, f_center]
         if self._with_distance:
             points_dist = torch.norm(features[:, :, :3], 2, 2, keepdim=True)
+            # print("[debug] aft norm: ",np.unique(np.isnan(features.cpu().numpy())))
             features_ls.append(points_dist)
         features = torch.cat(features_ls, dim=-1)
+        # print("[debug] aft cat: ",np.unique(np.isnan(features.cpu().numpy())))
 
         # The feature decorations were calculated without regard to whether pillar was empty. Need to ensure that
         # empty pillars remain set to zeros.
@@ -133,11 +144,11 @@ class PillarFeatureNet(nn.Module):
         mask = get_paddings_indicator(num_voxels, voxel_count, axis=0)
         mask = torch.unsqueeze(mask, -1).type_as(features)
         features *= mask
-
         # Forward pass through PFNLayers
+        # print(np.unique(np.isnan(features.cpu().numpy())))
         for pfn in self.pfn_layers:
             features = pfn(features)
-
+        # print(features)
         return features.squeeze()
 
 

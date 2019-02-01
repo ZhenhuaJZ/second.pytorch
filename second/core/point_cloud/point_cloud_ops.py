@@ -58,7 +58,6 @@ def _points_to_voxel_dense_sample(points,
                                     coors,
                                     max_points=35,
                                     max_voxels=20000):
-    print("[debug] enter dense sampling")
     N = points.shape[0]
     # ndim = points.shape[1] - 1
     ndim = 3
@@ -107,7 +106,7 @@ def _points_to_voxel_dense_sample(points,
             mask_xyz = ((points[:,:3] >= voxel_range[:3]) & (points[:,:3] <= voxel_range[3:]))
             mask = (mask_xyz[:,0]*mask_xyz[:,1]*mask_xyz[:,2])#.astype(np.bool)
             voxel_points = points[mask,:]
-            max_points_in_radius = 0
+            max_points_in_radius = -1
             index = voxel_points.shape[0]
             # Create a temprarely container for sampling
             if index < 100:
@@ -311,11 +310,8 @@ def points_to_voxel(points,
             coor_to_voxelidx, voxels, coors, max_points, max_voxels)
     coors = coors[:voxel_num]
     voxels = voxels[:voxel_num]
-    # print(voxels.shape)
+    num_points_per_voxel = num_points_per_voxel[:voxel_num]
     # pcl_viewer(voxels.reshape(max_voxels*max_points,points.shape[-1]))
-    # num_points_per_voxel = num_points_per_voxel[:voxel_num]
-    # voxels[:, :, -3:] = voxels[:, :, :3] - \
-    #     voxels[:, :, :3].sum(axis=1, keepdims=True)/num_points_per_voxel.reshape(-1, 1, 1)
     return voxels, coors, num_points_per_voxel
 
 
