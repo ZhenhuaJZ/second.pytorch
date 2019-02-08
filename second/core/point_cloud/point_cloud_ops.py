@@ -19,56 +19,19 @@ def pcl_viewer(points):
     while flag:
         flag = not viewer.WasStopped()
 
-# @numba.jit(nopython = True)
-# def _points_to_voxel_dense_sample_f(points,
-#                                     voxel_size,
-#                                     coors_range,
-#                                     num_points_per_voxel,
-#                                     coor_to_voxelidx,
-#                                     voxels,
-#                                     coors,
-#                                     max_points=35,
-#                                     max_voxels=20000):
-#     # sample most dense section of the voxel
-#     print("[debug] enter dense_sample")
-#     # range of each voxel in point space
-#     voxel_range = np.array([0,0,0,0,0,0,0,9999], dtype = np.float32)
-#     grid_x = grid_size[0]
-#     grid_y = grid_size[1]
-#     for x in range(grid_x):
-#         for y in range(grid_y):
-#             # for dim in range(ndim):
-#             #     voxel_range[dim] =
-#             voxel_range[:3] = grid_size * voxel_size + coors_range[:3]
-#             voxel_range[4:-1] = grid_size * voxel_size + voxel_size + coors_range[3:]
-#             # Get voxel within grid
-#
-#             # sample points
-#             # assign coors
-#             # assign voxels
-#     # # for each voxel
-#     # for voxel_idx in range(voxels):
-#         # get its corresponding points exist within that voxel
-#
-#     exit()
-#     #
-#     #
 @numba.jit(nopython = True)
-def dense_sampling(voxels, dense_smp_voxels, coors, num_points_per_voxel, voxel_size, max_points):
+def dense_sampling(voxels, dense_smp_voxels, coors, num_points_per_voxel, voxel_size, max_points, voxel_ratio = 0.8):
     voxel_indexes = voxels.shape[0]
-    print("[debug] voxel_indexes: ", voxel_indexes)
     num_points = voxels.shape[1]
     ndim = voxels.shape[2]
     points = np.zeros(shape = (num_points,ndim),dtype = np.float32)
     most_points = np.zeros(shape = (max_points,ndim),dtype = np.float32)
     tmp_points = np.zeros(shape = (max_points,ndim),dtype = np.float32)
     zero_point = np.zeros(shape = (ndim,), dtype = np.float32)
-    cluster_radius = voxel_size[0]/2 * 0.8
+    cluster_radius = voxel_size[0]/2 * voxel_ratio
 
     for index in range(voxel_indexes):
         points = voxels[index]
-        # print("[debug] points", points)
-        # print("[debug] points.shape", points.shape)
         most_points[:] = 0
         # Center point index
         num_max_points_in_radius = -1
@@ -104,7 +67,6 @@ def dense_sampling(voxels, dense_smp_voxels, coors, num_points_per_voxel, voxel_
             num_points_per_voxel[index] = max_points
         else:
             num_points_per_voxel[index] = num_max_points_in_radius
-    # print(dense_smp_voxels)
     return dense_smp_voxels
 
 @numba.jit(nopython = True)
