@@ -269,7 +269,6 @@ def points_to_voxel(points,
         coordinates: [M, 3] int32 tensor.
         num_points_per_voxel: [M] int32 tensor.
     """
-    print("###### points_to_voxel runing !!!!")
     if not isinstance(voxel_size, np.ndarray):
         voxel_size = np.array(voxel_size, dtype=points.dtype)
     if not isinstance(coors_range, np.ndarray):
@@ -312,6 +311,7 @@ def points_to_voxel(points,
     num_points_per_pillar = np.zeros(shape=(max_pillars, ), dtype=np.int32)
 
     for p_index, pillar_c in enumerate(pillar_coors):
+        print("[debug] p_index : ", p_index)
         voxel_to_pillar_index = pillar_xy_plane == pillar_c
         voxel_to_pillar_index = np.logical_and(voxel_to_pillar_index[:,0], voxel_to_pillar_index[:,1]) # logical and [y,x]
 
