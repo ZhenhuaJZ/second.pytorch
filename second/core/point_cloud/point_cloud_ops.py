@@ -311,7 +311,7 @@ def points_to_voxel(points,
     num_points_per_pillar = np.zeros(shape=(max_pillars, ), dtype=np.int32)
 
     for p_index, pillar_c in enumerate(pillar_coors):
-        print("[debug] p_index : ", p_index)
+        # print("[debug] p_index : ", p_index)
         voxel_to_pillar_index = pillar_xy_plane == pillar_c
         voxel_to_pillar_index = np.logical_and(voxel_to_pillar_index[:,0], voxel_to_pillar_index[:,1]) # logical and [y,x]
 
@@ -323,7 +323,7 @@ def points_to_voxel(points,
         # pillars[p_index] = voxels[voxel_to_pillar_index].reshape(-1, points.shape[-1])
         # print("voxels[voxel_to_pillar_index] reshape ", voxels[voxel_to_pillar_index].reshape(-1, points.shape[-1]).shape)
 
-    return voxels, coors, num_points_per_voxel
+    return pillars, pillars_coors, num_points_per_pillar
     # voxels[:, :, -3:] = voxels[:, :, :3] - \
     #     voxels[:, :, :3].sum(axis=1, keepdims=True)/num_points_per_voxel.reshape(-1, 1, 1)
     # return voxels, coors, num_points_per_voxel
