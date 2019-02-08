@@ -283,7 +283,6 @@ def points_to_voxel(points,
     voxels = np.zeros(
         shape=(max_voxels, max_points, points.shape[-1]), dtype=points.dtype)
     coors = np.zeros(shape=(max_voxels, 3), dtype=np.int32)
-    print("run here")
     if reverse_index:
         voxel_num = _points_to_voxel_reverse_kernel_avg(
             points, voxel_size, coors_range, num_points_per_voxel,
@@ -306,6 +305,7 @@ def points_to_voxel(points,
     max_points_per_pillar = max_points * voxelmap_shape[2] # grid_size[2] is Z (not reversed)
     print("[debug] max_points_per_pillar:", max_points_per_pillar)
 
+    # pillars = np.zeros(shape=(max_pillars, max_points_per_pillar, points.shape[-1]), dtype=points.dtype)
     pillars = np.zeros(shape=(max_pillars, max_points_per_pillar, points.shape[-1]), dtype=points.dtype)
     pillars_coors = np.zeros(shape=(max_pillars, 3), dtype=np.int32)
     num_points_per_pillar = np.zeros(shape=(max_pillars, ), dtype=np.int32)
@@ -318,7 +318,8 @@ def points_to_voxel(points,
         pillars_coors[p_index] = np.array([0, pillar_c[0], pillar_c[1]]) # z,y,x
         num_points_per_pillar[p_index] = np.sum(num_points_per_voxel[voxel_to_pillar_index]) # total points in one pillar (sum all voxels points)
         # print("voxels[voxel_to_pillar_index] shape ", voxels[voxel_to_pillar_index].shape)
-        pillars[p_index, num_points_per_pillar[p_index]] = voxels[voxel_to_pillar_index].reshape(-1, points.shape[-1])
+        pillars = voxels[voxel_to_pillar_index].reshape(-1, points.shape[-1])
+        pillars[p_index][:pillars.shape[0]] = pillars # put voxels to pillars container
         # pillars[p_index] = voxels[voxel_to_pillar_index].reshape(-1, points.shape[-1])
         # print("voxels[voxel_to_pillar_index] reshape ", voxels[voxel_to_pillar_index].reshape(-1, points.shape[-1]).shape)
 
