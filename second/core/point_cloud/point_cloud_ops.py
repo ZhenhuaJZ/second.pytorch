@@ -40,11 +40,11 @@ def _points_to_voxel_reverse_kernel_avg(
     ndim = 3
     ndim_minus_1 = ndim - 1
     grid_size = (coors_range[3:] - coors_range[:3]) / voxel_size
-    print("[debug] grid_size : ", grid_size)
+    # print("[debug] grid_size : ", grid_size)
     # np.round(grid_size)
     # grid_size = np.round(grid_size).astype(np.int64)(np.int32)
     grid_size = np.round(grid_size, 0, grid_size).astype(np.int32)
-    print("[debug] rounded grid_size : ", grid_size)
+    # print("[debug] rounded grid_size : ", grid_size)
     coor = np.zeros(shape=(3, ), dtype=np.int32)
     voxel_num = 0
     failed = False
