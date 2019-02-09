@@ -275,8 +275,10 @@ def points_to_voxel(points,
         coors_range = np.array(coors_range, dtype=points.dtype)
     voxelmap_shape = (coors_range[3:] - coors_range[:3]) / voxel_size
     voxelmap_shape = tuple(np.round(voxelmap_shape).astype(np.int32).tolist())
+    voxels_num_in_zaxis = voxelmap_shape[2] # new line was edited by leo
     if reverse_index:
         voxelmap_shape = voxelmap_shape[::-1]
+        voxels_num_in_zaxis = voxelmap_shape[0]  # new line was edited by leo
     # don't create large array in jit(nopython=True) code.
     num_points_per_voxel = np.zeros(shape=(max_voxels, ), dtype=np.int32)
     coor_to_voxelidx = -np.ones(shape=voxelmap_shape, dtype=np.int32)
@@ -304,10 +306,9 @@ def points_to_voxel(points,
 
     max_pillars = len(pillar_coors)
     # print("[debug] voxelmap_shape[2]:", voxelmap_shape[2])
-    max_points_per_pillar = max_points * voxelmap_shape[2] # grid_size[2] is Z (not reversed)
+    max_points_per_pillar = max_points * voxels_num_in_zaxis # grid_size[2] is Z (reversed)
     # print("[debug] max_points_per_pillar:", max_points_per_pillar)
 
-    # pillars = np.zeros(shape=(max_pillars, max_points_per_pillar, points.shape[-1]), dtype=points.dtype)
     pillars = np.zeros(shape=(max_pillars, max_points_per_pillar, points.shape[-1]), dtype=points.dtype)
     pillars_coors = np.zeros(shape=(max_pillars, 3), dtype=np.int32)
     num_points_per_pillar = np.zeros(shape=(max_pillars, ), dtype=np.int32)
