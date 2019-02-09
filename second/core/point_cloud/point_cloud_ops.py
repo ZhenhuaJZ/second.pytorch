@@ -282,6 +282,7 @@ def points_to_voxel(points,
     coor_to_voxelidx = -np.ones(shape=voxelmap_shape, dtype=np.int32)
     voxels = np.zeros(
         shape=(max_voxels, max_points, points.shape[-1]), dtype=points.dtype)
+    print("[debug-0] voxels shape ", voxels.shape)
     coors = np.zeros(shape=(max_voxels, 3), dtype=np.int32)
     if reverse_index:
         voxel_num = _points_to_voxel_reverse_kernel_avg(
