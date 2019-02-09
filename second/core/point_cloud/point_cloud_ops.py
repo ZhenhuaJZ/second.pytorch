@@ -30,8 +30,8 @@ def _points_to_voxel_reverse_kernel_avg(
                                     coor_to_voxelidx,
                                     voxels,
                                     coors,
-                                    max_points=4,
-                                    max_voxels=200000):
+                                    max_points=40,
+                                    max_voxels=12000):
     # put all computations to one loop.
     # we shouldn't create large array in main jit code, otherwise
     # reduce performance
@@ -40,10 +40,11 @@ def _points_to_voxel_reverse_kernel_avg(
     ndim = 3
     ndim_minus_1 = ndim - 1
     grid_size = (coors_range[3:] - coors_range[:3]) / voxel_size
+    print("[debug] grid_size : ", grid_size)
     # np.round(grid_size)
     # grid_size = np.round(grid_size).astype(np.int64)(np.int32)
     grid_size = np.round(grid_size, 0, grid_size).astype(np.int32)
-    # print("grid_size : ", grid_size[2])
+    print("[debug] rounded grid_size : ", grid_size)
     coor = np.zeros(shape=(3, ), dtype=np.int32)
     voxel_num = 0
     failed = False
@@ -257,9 +258,9 @@ def _points_to_voxel_kernel(points,
 def points_to_voxel(points,
                      voxel_size,
                      coors_range,
-                     max_points=4, # for averge sampling change max_points to 4
+                     max_points=40, # for averge sampling change max_points to 4
                      reverse_index=True,
-                     max_voxels=200000): # for averge sampling change max_voxels = 200000
+                     max_voxels=12000): # for averge sampling change max_voxels = 200000
     """convert kitti points(N, >=3) to voxels. This version calculate
     everything in one loop. now it takes only 4.2ms(complete point cloud)
     with jit and 3.2ghz cpu.(don't calculate other features)
@@ -340,7 +341,6 @@ def points_to_voxel(points,
         _pillars = voxels[voxel_to_pillar_index].reshape(-1, points.shape[-1])
         pillars[p_index][:_pillars.shape[0]] = _pillars # put voxels to pillars container
         # pillars[p_index] = voxels[voxel_to_pillar_index].reshape(-1, points.shape[-1])
-        # print("voxels[voxel_to_pillar_index] reshape ", voxels[voxel_to_pillar_index].reshape(-1, points.shape[-1]).shape)
     # print("[debug-2] : pillars {}, pillars_coors {}, num_points_per_pillar {}".format(pillars.shape, pillars_coors.shape, num_points_per_pillar.shape))
     # pcl_viewer(pillars.reshape((-1,4)))
     return pillars, pillars_coors, num_points_per_pillar
