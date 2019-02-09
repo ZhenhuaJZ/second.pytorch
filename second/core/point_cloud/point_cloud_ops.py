@@ -323,10 +323,10 @@ def points_to_voxel(points,
         # pillars[p_index] = voxels[voxel_to_pillar_index].reshape(-1, points.shape[-1])
         # print("voxels[voxel_to_pillar_index] reshape ", voxels[voxel_to_pillar_index].reshape(-1, points.shape[-1]).shape)
 
-    return pillars, pillars_coors, num_points_per_pillar
+    # return pillars, pillars_coors, num_points_per_pillar
     # voxels[:, :, -3:] = voxels[:, :, :3] - \
     #     voxels[:, :, :3].sum(axis=1, keepdims=True)/num_points_per_voxel.reshape(-1, 1, 1)
-    # return voxels, coors, num_points_per_voxel
+    return voxels, coors, num_points_per_voxel
 
 
 @numba.jit(nopython=True)
