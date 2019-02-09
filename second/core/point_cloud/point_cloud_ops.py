@@ -2,7 +2,22 @@ import time
 
 import numba
 import numpy as np
+import pcl
+from pcl import pcl_visualization
 
+def pcl_viewer(points):
+    print(points.shape)
+    if points.shape[1] > 3:
+        p_cloud = pcl.PointCloud_PointXYZI()
+        p_cloud.from_array(points[:,:4])
+    else:
+        p_cloud = pcl.PointCloud_pointXYZ()
+        p_cloud.from_array(points[:,:3])
+    viewer = pcl.pcl_visualization.CloudViewing()
+    viewer.ShowGrayCloud(p_cloud)
+    flag = True
+    while flag:
+        flag = not viewer.WasStopped()
 
 # voxel_size (0.16,0.16,4) 4 is the total Z range (-3,1) !!!
 # change voxel size Z axis to evenly grids, such as 0.4 which means 4/0.4 = 10 devided Z into 10 grids
@@ -270,6 +285,7 @@ def points_to_voxel(points,
         coordinates: [M, 3] int32 tensor.
         num_points_per_voxel: [M] int32 tensor.
     """
+    # pcl_viewer(points)
     if not isinstance(voxel_size, np.ndarray):
         voxel_size = np.array(voxel_size, dtype=points.dtype)
     if not isinstance(coors_range, np.ndarray):
@@ -326,6 +342,7 @@ def points_to_voxel(points,
         # pillars[p_index] = voxels[voxel_to_pillar_index].reshape(-1, points.shape[-1])
         # print("voxels[voxel_to_pillar_index] reshape ", voxels[voxel_to_pillar_index].reshape(-1, points.shape[-1]).shape)
     # print("[debug-2] : pillars {}, pillars_coors {}, num_points_per_pillar {}".format(pillars.shape, pillars_coors.shape, num_points_per_pillar.shape))
+    # pcl_viewer(pillars.reshape((-1,4)))
     return pillars, pillars_coors, num_points_per_pillar
     # voxels[:, :, -3:] = voxels[:, :, :3] - \
     #     voxels[:, :, :3].sum(axis=1, keepdims=True)/num_points_per_voxel.reshape(-1, 1, 1)
