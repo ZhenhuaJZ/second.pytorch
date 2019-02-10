@@ -42,7 +42,7 @@ def latest_checkpoint(model_dir, model_name):
     ckpt_file_name = Path(model_dir) / latest_ckpt
     if not ckpt_file_name.is_file():
         return None
-    
+
     return str(ckpt_file_name)
 
 def _ordered_unique(seq):
@@ -63,7 +63,7 @@ def save(model_dir,
         model_name: name of your model. we find ckpts by name
         global_step: int, indicate current global step.
         max_to_keep: int, maximum checkpoints to keep.
-        keep_latest: bool, if True and there are too much ckpts, 
+        keep_latest: bool, if True and there are too much ckpts,
             will delete oldest ckpt. else will delete ckpt which has
             smallest global step.
     Returns:
@@ -104,7 +104,8 @@ def save(model_dir,
                 min_step = min([get_step(name) for name in all_ckpts])
                 ckpt_to_delete = "{}-{}.tckpt".format(model_name, min_step)
                 all_ckpts.remove(ckpt_to_delete)
-            os.remove(str(Path(model_dir) / ckpt_to_delete))
+            # os.remove(str(Path(model_dir) / ckpt_to_delete))
+            os.remove(str(ckpt_to_delete))
         all_ckpts_filename = _ordered_unique([Path(f).name for f in all_ckpts])
         ckpt_info_dict['all_ckpts'][model_name] = all_ckpts_filename
         with open(ckpt_info_path, 'w') as f:
