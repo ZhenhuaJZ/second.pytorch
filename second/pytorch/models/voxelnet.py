@@ -485,44 +485,47 @@ class LossNormType(Enum):
     NormByNumExamples = "norm_by_num_examples"
     NormByNumPosNeg = "norm_by_num_pos_neg"
 
-def eigenValueExtractor(voxels, num_points):
-    voxel_indexes = voxels.shape[0]
-    eigen_feature = torch.zeros([voxel_indexes,3], device = voxels.device)
-    for idx in range(voxel_indexes):
-        # print("[debug] num_points[idx]: ", num_points[idx])
-        selected_points = voxels[idx][:num_points[idx],:3]
-        # print("[debug] selected_points: ", selected_points)
-        if num_points[idx] == 0:
-            eigen_feature[idx] = torch.zeros([3], device = voxels.device)
-            continue
-        if num_points[idx] == 1:
-            eigen_matrix = selected_points*torch.transpose(selected_points, 0,1)
-            # print("[debug] eigen_matrix: ", eigen_matrix)
-            # eigen_values = torch.eig(eigen_matrix)[0][:,0]
-            # eigen_values,_ = torch.sort(eigen_values, descending = False)
-            # print(eigen_values)
-        else:
-            point_mean = torch.mean(selected_points, 0, keepdim = True)
-            # print("[debug] selected_points-point_mean: ", selected_points-point_mean)
-            # print("[debug] torch.transpose(selected_points-point_mean, 0,1): ", torch.transpose(selected_points-point_mean, 0,1))
-            # print(torch.mm((selected_points-point_mean),torch.transpose(selected_points-point_mean, 0,1)))
-            n_points = selected_points.shape[0]
-            eigen_matrix = torch.zeros([3,3], device = voxels.device)
-            for idx in range(n_points):
-                # print("[debug] point_mean: ", point_mean)
-                # print("[debug] selected_points[idx]-point_mean: ",selected_points[idx]-point_mean)
-                # print("[debug] torch.transpose(selected_points[idx]-point_mean, 0,1): ", torch.transpose(selected_points[idx]-point_mean,0, 1))
-                eigen_matrix += (selected_points[idx,:]-point_mean)*torch.transpose(selected_points[idx,:]-point_mean, 0,1)
-            eigen_matrix /= n_points
-            # eigen_matrix = torch.mean(torch.matmul((selected_points-point_mean),torch.transpose(selected_points-point_mean, 0,1)), 0)
-            # print("[debug] eigen_matrix: ", eigen_matrix)
-        x = time.time()
-        eigen_values = torch.eig(eigen_matrix)[0][:,0]
-        print("[debug] eig time: ", time.time()-x)
-        eigen_values,_ = torch.sort(eigen_values, descending = False)
-        eigen_feature[idx] = eigen_values
-        # eigen_matrix = torch.mean(torch.sum((selected_points-point_mean)*torch.transpose(selected_points-point_mean, 0,1), 1), 1)
-    return eigen_feature
+class eigenValueExtractor(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.name = "eigenValueExtractor"
+
+    def forward(self, voxels, num_points):
+        voxel_indexes = voxels.shape[0]
+        eigen_feature = torch.zeros([voxel_indexes,3], device = voxels.device)
+        for idx in range(voxel_indexes):
+            selected_points = voxels[idx][:num_points[idx],:3]
+            if num_points[idx] == 0:
+                eigen_feature[idx] = torch.zeros([3], device = voxels.device)
+                continue
+            if num_points[idx] == 1:
+                eigen_matrix = selected_points*torch.transpose(selected_points, 0,1)
+                # print("[debug] eigen_matrix: ", eigen_matrix)
+                # eigen_values = torch.eig(eigen_matrix)[0][:,0]
+                # eigen_values,_ = torch.sort(eigen_values, descending = False)
+                # print(eigen_values)
+            else:
+                point_mean = torch.mean(selected_points, 0, keepdim = True)
+                # print("[debug] selected_points-point_mean: ", selected_points-point_mean)
+                # print("[debug] torch.transpose(selected_points-point_mean, 0,1): ", torch.transpose(selected_points-point_mean, 0,1))
+                # print(torch.mm((selected_points-point_mean),torch.transpose(selected_points-point_mean, 0,1)))
+                n_points = selected_points.shape[0]
+                eigen_matrix = torch.zeros([3,3], device = voxels.device)
+                for idx in range(n_points):
+                    # print("[debug] point_mean: ", point_mean)
+                    # print("[debug] selected_points[idx]-point_mean: ",selected_points[idx]-point_mean)
+                    # print("[debug] torch.transpose(selected_points[idx]-point_mean, 0,1): ", torch.transpose(selected_points[idx]-point_mean,0, 1))
+                    eigen_matrix += (selected_points[idx,:]-point_mean)*torch.transpose(selected_points[idx,:]-point_mean, 0,1)
+                eigen_matrix /= n_points
+                # eigen_matrix = torch.mean(torch.matmul((selected_points-point_mean),torch.transpose(selected_points-point_mean, 0,1)), 0)
+                # print("[debug] eigen_matrix: ", eigen_matrix)
+            eigen_values = torch.eig(eigen_matrix)[0][:,0]
+            eigen_values,_ = torch.sort(eigen_values, descending = False)
+            eigen_feature[idx][0] = eigen_values[2]
+            eigen_feature[idx][1] = eigen_values[0] - eigen_values[1]
+            eigen_feature[idx][2] = eigen_values[1] - eigen_values[2]
+            # eigen_matrix = torch.mean(torch.sum((selected_points-point_mean)*torch.transpose(selected_points-point_mean, 0,1), 1), 1)
+        return eigen_feature
 
 
 class VoxelNet(nn.Module):
@@ -613,7 +616,8 @@ class VoxelNet(nn.Module):
             num_filters=vfe_num_filters,
             with_distance=with_distance)
 
-        print("middle_class_name", middle_class_name)
+        self.eve = eigenValueExtractor()
+
         if middle_class_name == "PointPillarsScatter":
             self.middle_feature_extractor = PointPillarsScatter(output_shape=output_shape,
                                                                 num_input_features=vfe_num_filters[-1])
@@ -695,7 +699,7 @@ class VoxelNet(nn.Module):
         voxel_features = self.voxel_feature_extractor(voxels, num_points, coors)
 
         ## NOTE: Incooperate local feature
-        new_voxel_features = eigenValueExtractor(voxels, num_points)
+        new_voxel_features = self.eve(voxels, num_points)
 
         if self._use_sparse_rpn:
             preds_dict = self.sparse_rpn(voxel_features, coors, batch_size_dev)
