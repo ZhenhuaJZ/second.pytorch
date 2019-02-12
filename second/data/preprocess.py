@@ -80,7 +80,7 @@ def prep_pointcloud(input_dict,
                     bev_only=False,
                     use_group_id=False,
                     out_dtype=np.float32):
-    """convert point cloud to voxels, create targets if ground truths 
+    """convert point cloud to voxels, create targets if ground truths
     exists.
     """
     points = input_dict["points"]
@@ -250,11 +250,15 @@ def prep_pointcloud(input_dict,
     # if not lidar_input:
     feature_map_size = grid_size[:2] // out_size_factor
     feature_map_size = [*feature_map_size, 1][::-1]
+
+    #if no anchor_cache pass to this function, then no excution (pass from datset.py)
     if anchor_cache is not None:
         anchors = anchor_cache["anchors"]
         anchors_bv = anchor_cache["anchors_bv"]
         matched_thresholds = anchor_cache["matched_thresholds"]
         unmatched_thresholds = anchor_cache["unmatched_thresholds"]
+
+    # generate anchors boxes
     else:
         ret = target_assigner.generate_anchors(feature_map_size)
         anchors = ret["anchors"]
@@ -275,7 +279,7 @@ def prep_pointcloud(input_dict,
         dense_voxel_map = dense_voxel_map.cumsum(1)
         anchors_area = box_np_ops.fused_get_anchors_area(
             dense_voxel_map, anchors_bv, voxel_size, pc_range, grid_size)
-        anchors_mask = anchors_area > anchor_area_threshold
+        anchors_mask = anchors_area > anchor_area_threshold # check commemt below
         # example['anchors_mask'] = anchors_mask.astype(np.uint8)
         example['anchors_mask'] = anchors_mask
     if generate_bev:
@@ -287,6 +291,9 @@ def prep_pointcloud(input_dict,
         example["bev_map"] = bev_map
     if not training:
         return example
+    """
+    anchors_mask is used Summed-area table algorithm to calculate the
+    """
     if create_targets:
         targets_dict = target_assigner.assign(
             anchors,
@@ -357,4 +364,3 @@ def _read_and_prep_v9(info, root_path, num_point_features, prep_func):
     if "anchors_mask" in example:
         example["anchors_mask"] = example["anchors_mask"].astype(np.uint8)
     return example
-

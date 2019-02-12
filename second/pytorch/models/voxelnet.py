@@ -378,8 +378,7 @@ class RPN(nn.Module):
 
         self.block1 = Sequential(
             nn.ZeroPad2d(1),
-            Conv2d(
-                num_input_filters, num_filters[0], 3, stride=layer_strides[0]),
+            Conv2d(num_input_filters, num_filters[0], 3, stride=layer_strides[0]),
             BatchNorm2d(num_filters[0]),
             nn.ReLU(),
         )
@@ -399,11 +398,7 @@ class RPN(nn.Module):
         )
         self.block2 = Sequential(
             nn.ZeroPad2d(1),
-            Conv2d(
-                block2_input_filters,
-                num_filters[1],
-                3,
-                stride=layer_strides[1]),
+            Conv2d(block2_input_filters, num_filters[1], 3, stride=layer_strides[1]),
             BatchNorm2d(num_filters[1]),
             nn.ReLU(),
         )
