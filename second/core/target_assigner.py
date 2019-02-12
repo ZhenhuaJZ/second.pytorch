@@ -3,6 +3,9 @@ from second.core.target_ops import create_target_np
 from second.core import region_similarity
 import numpy as np
 
+"""
+anchor_generators is a object can be found in anchor_generator_builder.py it has all the details of the anchors box
+"""
 class TargetAssigner:
     def __init__(self,
                  box_coder,
@@ -55,6 +58,7 @@ class TargetAssigner:
             norm_by_num_examples=False,
             box_code_size=self.box_coder.code_size)
 
+    # only generate anchors box not compare with ground truths
     def generate_anchors(self, feature_map_size):
         anchors_list = []
         matched_thresholds = [
