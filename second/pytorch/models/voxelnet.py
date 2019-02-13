@@ -487,8 +487,10 @@ class LossNormType(Enum):
 
 class eigenValueExtractor(nn.Module):
     def __init__(self):
-        super().__init__()
+        super(eigenValueExtractor, self).__init__()
         self.name = "eigenValueExtractor"
+        Conv2d = nn.Conv2d
+        self.block = Sequential(Conv2d(in_channels = 1, out_channels = 3,kernel_size = 3),nn.ReLU())
 
     def forward(self, voxels, num_points):
         voxel_indexes = voxels.shape[0]
@@ -519,11 +521,16 @@ class eigenValueExtractor(nn.Module):
                 eigen_matrix /= n_points
                 # eigen_matrix = torch.mean(torch.matmul((selected_points-point_mean),torch.transpose(selected_points-point_mean, 0,1)), 0)
                 # print("[debug] eigen_matrix: ", eigen_matrix)
-            eigen_values = torch.eig(eigen_matrix)[0][:,0]
-            eigen_values,_ = torch.sort(eigen_values, descending = False)
-            eigen_feature[idx][0] = eigen_values[2]
-            eigen_feature[idx][1] = eigen_values[0] - eigen_values[1]
-            eigen_feature[idx][2] = eigen_values[1] - eigen_values[2]
+            eigen_matrix = torch.unsqueeze(eigen_matrix,0)
+            eigen_matrix = torch.unsqueeze(eigen_matrix,0)
+            eigen_feature[idx] = torch.reshape(self.block(eigen_matrix),(3,))
+        print("[debug] finish fe")
+            # Older version using eigen value
+            # eigen_values = torch.eig(eigen_matrix)[0][:,0]
+            # eigen_values,_ = torch.sort(eigen_values, descending = False)
+            # eigen_feature[idx][0] = eigen_values[2]
+            # eigen_feature[idx][1] = eigen_values[0] - eigen_values[1]
+            # eigen_feature[idx][2] = eigen_values[1] - eigen_values[2]
             # eigen_matrix = torch.mean(torch.sum((selected_points-point_mean)*torch.transpose(selected_points-point_mean, 0,1), 1), 1)
         return eigen_feature
 
@@ -617,7 +624,7 @@ class VoxelNet(nn.Module):
             with_distance=with_distance)
 
         self.eve = eigenValueExtractor()
-
+        vfe_num_filters[-1] += 3
         if middle_class_name == "PointPillarsScatter":
             self.middle_feature_extractor = PointPillarsScatter(output_shape=output_shape,
                                                                 num_input_features=vfe_num_filters[-1])
@@ -697,9 +704,9 @@ class VoxelNet(nn.Module):
         # num_points: [num_voxels]
         # coors: [num_voxels, 4]
         voxel_features = self.voxel_feature_extractor(voxels, num_points, coors)
-
         ## NOTE: Incooperate local feature
         new_voxel_features = self.eve(voxels, num_points)
+        voxel_features = torch.cat((voxel_features, new_voxel_features), 1)
 
         if self._use_sparse_rpn:
             preds_dict = self.sparse_rpn(voxel_features, coors, batch_size_dev)
