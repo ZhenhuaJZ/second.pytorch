@@ -65,7 +65,7 @@ def dense_sampling(voxels, dense_smp_voxels, coors, num_points_per_voxel, voxel_
             num_points_per_voxel[index] = num_max_points_in_radius
     return dense_smp_voxels
 
-# @numba.jit(nopython = True)
+@numba.jit(nopython = True)
 def dense_sampling_v2(voxels, num_points_per_voxel, voxel_size, max_points, voxel_ratio = 0.8):
     voxel_indexes = voxels.shape[0]
     num_points = voxels.shape[1]
@@ -354,18 +354,18 @@ def points_to_voxel(points,
     # don't create large array in jit(nopython=True) code.
     num_points_per_voxel = np.zeros(shape=(max_voxels, ), dtype=np.int32)
     coor_to_voxelidx = -np.ones(shape=voxelmap_shape, dtype=np.int32)
-    # pre_sample_max_points = max_points
-    # if dense_sample:
-    #     pre_sample_max_points = max_points + 100
+    pre_sample_max_points = max_points
+    if dense_sample:
+        pre_sample_max_points = max_points + 100
     voxels = np.zeros(
-        shape=(max_voxels, max_points, points.shape[-1]), dtype=points.dtype)
+        shape=(max_voxels, pre_sample_max_points, points.shape[-1]), dtype=points.dtype)
     coors = np.zeros(shape=(max_voxels, 3), dtype=np.int32)
     if reverse_index:
         # Ran here
         # voxel_num = _points_to_voxel_dense_sample(
         voxel_num = _points_to_voxel_reverse_kernel(
             points, voxel_size, coors_range, num_points_per_voxel,
-            coor_to_voxelidx, voxels, coors, max_points, max_voxels)
+            coor_to_voxelidx, voxels, coors, pre_sample_max_points, max_voxels)
 
     else:
         voxel_num = _points_to_voxel_kernel(
@@ -377,9 +377,9 @@ def points_to_voxel(points,
 
     #########Dense Sample###########
     if dense_sample:
-        # dense_smp_voxels = np.zeros(shape=(voxel_num,max_points,points.shape[-1]), dtype = points.dtype)
-        # voxels = dense_sampling(voxels, dense_smp_voxels, coors, num_points_per_voxel, voxel_size, max_points)
-        dense_sampling_v2(voxels, num_points_per_voxel, voxel_size, max_points)
+        dense_smp_voxels = np.zeros(shape=(voxel_num,max_points,points.shape[-1]), dtype = points.dtype)
+        voxels = dense_sampling(voxels, dense_smp_voxels, coors, num_points_per_voxel, voxel_size, max_points)
+        # dense_sampling_v2(voxels, num_points_per_voxel, voxel_size, max_points)
     # pcl_viewer(voxels.reshape(-1,points.shape[-1]))
     return voxels, coors, num_points_per_voxel
 
