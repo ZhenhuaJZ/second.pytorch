@@ -474,7 +474,140 @@ class RPN(nn.Module):
             ret_dict["dir_cls_preds"] = dir_cls_preds
         return ret_dict
 
+class RPNV2(nn.Module):
+    """Compare with RPN, RPNV2 support arbitrary number of stage.
+    """
+    def __init__(self,
+                 use_norm=True,
+                 num_class=2,
+                 layer_nums=[3, 5, 5],
+                 layer_strides=[2, 2, 2],
+                 num_filters=[128, 128, 256],
+                 upsample_strides=[1, 2, 4],
+                 num_upsample_filters=[256, 256, 256],
+                 num_input_features=128,
+                 num_anchor_per_loc=2,
+                 encode_background_as_zeros=True,
+                 use_direction_classifier=True,
+                 use_groupnorm=False,
+                 num_groups=32,
+                 use_bev=False,
+                 box_code_size=7,
+                 use_rc_net=False,
+                 name='rpn'):
+        super(RPNV2, self).__init__()
+        self._num_anchor_per_loc = num_anchor_per_loc
+        self._use_direction_classifier = use_direction_classifier
+        self._use_bev = use_bev
+        self._use_rc_net = use_rc_net
+        # assert len(layer_nums) == 3
+        assert len(layer_strides) == len(layer_nums)
+        assert len(num_filters) == len(layer_nums)
+        assert len(upsample_strides) == len(layer_nums)
+        assert len(num_upsample_filters) == len(layer_nums)
+        """
+        factors = []
+        for i in range(len(layer_nums)):
+            assert int(np.prod(layer_strides[:i + 1])) % upsample_strides[i] == 0
+            factors.append(np.prod(layer_strides[:i + 1]) // upsample_strides[i])
+        assert all([x == factors[0] for x in factors])
+        """
+        if use_norm:
+            if use_groupnorm:
+                BatchNorm2d = change_default_args(
+                    num_groups=num_groups, eps=1e-3)(GroupNorm)
+            else:
+                BatchNorm2d = change_default_args(
+                    eps=1e-3, momentum=0.01)(nn.BatchNorm2d)
+            Conv2d = change_default_args(bias=False)(nn.Conv2d)
+            ConvTranspose2d = change_default_args(bias=False)(
+                nn.ConvTranspose2d)
+        else:
+            BatchNorm2d = Empty
+            Conv2d = change_default_args(bias=True)(nn.Conv2d)
+            ConvTranspose2d = change_default_args(bias=True)(
+                nn.ConvTranspose2d)
 
+        in_filters = [num_input_features, *num_filters[:-1]]
+        # note that when stride > 1, conv2d with same padding isn't
+        # equal to pad-conv2d. we should use pad-conv2d.
+        blocks = []
+        deblocks = []
+
+        for i, layer_num in enumerate(layer_nums):
+            block = Sequential(
+                nn.ZeroPad2d(1),
+                Conv2d(
+                    in_filters[i], num_filters[i], 3, stride=layer_strides[i]),
+                BatchNorm2d(num_filters[i]),
+                nn.ReLU(),
+            )
+            for j in range(layer_num):
+                block.add(
+                    Conv2d(num_filters[i], num_filters[i], 3, padding=1))
+                block.add(BatchNorm2d(num_filters[i]))
+                block.add(nn.ReLU())
+            blocks.append(block)
+            deblock = Sequential(
+                ConvTranspose2d(
+                    num_filters[i],
+                    num_upsample_filters[i],
+                    upsample_strides[i],
+                    stride=upsample_strides[i]),
+                BatchNorm2d(num_upsample_filters[i]),
+                nn.ReLU(),
+            )
+            deblocks.append(deblock)
+        self.blocks = nn.ModuleList(blocks)
+        self.deblocks = nn.ModuleList(deblocks)
+        if encode_background_as_zeros:
+            num_cls = num_anchor_per_loc * num_class
+        else:
+            num_cls = num_anchor_per_loc * (num_class + 1)
+        self.conv_cls = nn.Conv2d(sum(num_upsample_filters), num_cls, 1)
+        self.conv_box = nn.Conv2d(
+            sum(num_upsample_filters), num_anchor_per_loc * box_code_size, 1)
+        if use_direction_classifier:
+            self.conv_dir_cls = nn.Conv2d(
+                sum(num_upsample_filters), num_anchor_per_loc * 2, 1)
+
+        if self._use_rc_net:
+            self.conv_rc = nn.Conv2d(
+                sum(num_upsample_filters), num_anchor_per_loc * box_code_size,
+                1)
+
+    def forward(self, x, bev=None):
+        # t = time.time()
+        # torch.cuda.synchronize()
+        ups = []
+        for i in range(len(self.blocks)):
+            x = self.blocks[i](x)
+            ups.append(self.deblocks[i](x))
+        if len(ups) > 1:
+            x = torch.cat(ups, dim=1)
+        else:
+            x = ups[0]
+        box_preds = self.conv_box(x)
+        cls_preds = self.conv_cls(x)
+        # [N, C, y(H), x(W)]
+        box_preds = box_preds.permute(0, 2, 3, 1).contiguous()
+        cls_preds = cls_preds.permute(0, 2, 3, 1).contiguous()
+        ret_dict = {
+            "box_preds": box_preds,
+            "cls_preds": cls_preds,
+        }
+        if self._use_direction_classifier:
+            dir_cls_preds = self.conv_dir_cls(x)
+            dir_cls_preds = dir_cls_preds.permute(0, 2, 3, 1).contiguous()
+            ret_dict["dir_cls_preds"] = dir_cls_preds
+        if self._use_rc_net:
+            rc_preds = self.conv_rc(x)
+            rc_preds = rc_preds.permute(0, 2, 3, 1).contiguous()
+            ret_dict["rc_preds"] = rc_preds
+        # torch.cuda.synchronize()
+        # print("rpn forward time", time.time() - t)
+        return ret_dict
+        
 class LossNormType(Enum):
     NormByNumPositives = "norm_by_num_positives"
     NormByNumExamples = "norm_by_num_examples"
