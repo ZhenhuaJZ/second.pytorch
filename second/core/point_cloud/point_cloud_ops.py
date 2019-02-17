@@ -38,7 +38,6 @@ def dense_sampling(voxels, dense_smp_voxels, coors, num_points_per_voxel, voxel_
         for c_idx in range(num_points):
             if (points[c_idx] == zero_point).all():
                 continue
-            # print("[debug] c_idx: ", c_idx)
             #surrounding points index
             tmp_points[:] = 0
             num_points_in_radius = 0
@@ -55,7 +54,7 @@ def dense_sampling(voxels, dense_smp_voxels, coors, num_points_per_voxel, voxel_
             # if this c_idx has the most point then store its points
             if num_points_in_radius > num_max_points_in_radius:
                 num_max_points_in_radius = num_points_in_radius
-                most_points = tmp_points
+                most_points = np.copy(tmp_points)
         # After gone through all the c_idx, store only the maximum number of points
         # to its voxel index
         dense_smp_voxels[index] = most_points
@@ -133,7 +132,6 @@ def _points_to_voxel_dense_sample(points,
     # voxel_points =
     voxel_num = 0
     failed = False
-    print(voxel_size)
     for i in range(N):
         failed = False
         for j in range(ndim):
@@ -374,7 +372,6 @@ def points_to_voxel(points,
     coors = coors[:voxel_num]
     voxels = voxels[:voxel_num]
     num_points_per_voxel = num_points_per_voxel[:voxel_num]
-
     #########Dense Sample###########
     if dense_sample:
         dense_smp_voxels = np.zeros(shape=(voxel_num,max_points,points.shape[-1]), dtype = points.dtype)
