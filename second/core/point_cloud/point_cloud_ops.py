@@ -199,7 +199,106 @@ def _points_to_voxel_dense_sample(points,
 
             # print(voxel_points)
 
+@numba.jit(nopython = True)
+def _points_to_voxel_dense_sample_v2(points,
+                                    voxel_size,
+                                    coors_range,
+                                    num_points_per_voxel,
+                                    coor_to_voxelidx,
+                                    voxels,
+                                    coors,
+                                    max_points=35,
+                                    max_voxels=20000):
+    N = points.shape[0]
+    # ndim = points.shape[1] - 1
+    ndim = 3
+    ndim_minus_1 = ndim - 1
+    grid_size = (coors_range[3:] - coors_range[:3]) / voxel_size
+    # np.round(grid_size)
+    # grid_size = np.round(grid_size).astype(np.int64)(np.int32)
+    grid_size = np.round(grid_size, 0, grid_size).astype(np.int32)
+    coor = np.zeros(shape=(3, ), dtype=np.int32)
+    voxel_range = np.zeros(shape=(6,), dtype=np.float32)
+    mask = np.zeros(shape = (N,), dtype = np.bool_)
+    mask_xyz = np.zeros(shape = (N, 3), dtype = np.bool_)
+    # distant_point = np.zeros(shape = (points.shape[-1]), dtype = np.float32)
+    cluster_radius = voxel_size[0]/2 * 0.8
+    # voxel_points =
+    voxel_num = 0
+    failed = False
+    for i in range(N):
+        failed = False
+        for j in range(ndim):
+            # get xyz into voxel coordinates
+            c = np.floor((points[i, j] - coors_range[j]) / voxel_size[j])
+            if c < 0 or c >= grid_size[j]:
+                failed = True
+                break
+            # Obtain range of the voxel
+            voxel_range[j] = c * voxel_size[j] + coors_range[j]
+            voxel_range[j + 3] = c * voxel_size[j] + voxel_size[j] + coors_range[j]
+            # print(voxel_range)
+            # reverse voxel coordinate
+            coor[ndim_minus_1 - j] = c
+        if failed:
+            continue
+        voxelidx = coor_to_voxelidx[coor[0], coor[1], coor[2]]
+        if voxelidx == -1:
+            # Assign voxel index in order
+            voxelidx = voxel_num
+            if voxel_num >= max_voxels:
+                break
+            voxel_num += 1
+            # Assign index to voxel coordinate
+            coor_to_voxelidx[coor[0], coor[1], coor[2]] = voxelidx
+            coors[voxelidx] = coor
+            ######################### Dense Sampling ############################
+            # Obtain points within the voxel from voxel range
+            mask_xyz = ((points[:,:3] >= voxel_range[:3]) & (points[:,:3] <= voxel_range[3:]))
+            mask = (mask_xyz[:,0]*mask_xyz[:,1]*mask_xyz[:,2])#.astype(np.bool)
+            voxel_points = points[mask,:]
+            max_points_in_radius = -1
+            index = voxel_points.shape[0]
 
+            # Create a temprarely container for sampling
+            if index < 100:
+                temp_points = np.zeros(shape = (100 ,points.shape[-1]), dtype = points.dtype)
+            else:
+                temp_points = np.zeros(shape = (index ,points.shape[-1]), dtype = points.dtype)
+
+            num_point_in_radius = 0
+            for i in range(index):
+                distance = np.sqrt(np.sum(np.square(voxel_points[:,:2]-voxel_points[i][:2]), axis=1))
+                seleted = np.sqrt(np.sum(np.square(voxel_points[:,:2]-voxel_points[i][:2]), axis=1)) < cluster_radius
+                num_point_in_radius = len(distance[seleted])
+
+                if num_point_in_radius > max_points_in_radius:
+                    temp_points[:num_point_in_radius] = voxel_points[seleted]
+                    voxels[voxelidx] = temp_points[:max_points]
+                    max_points_in_radius = num_point_in_radius
+
+                # for j in range(index):
+                #     distance = np.sqrt(np.sum(np.square(voxel_points[i][:2] - voxel_points[j][:2])))
+                #     if distance < cluster_radius:
+                #         temp_points[num_point_in_radius] = voxel_points[j]
+                #         num_point_in_radius += 1
+                # if num_point_in_radius > max_points_in_radius:
+                #     voxels[voxelidx] = temp_points[:max_points]
+                #     max_points_in_radius = num_point_in_radius
+
+            if max_points_in_radius > max_points:
+                num_points_per_voxel[voxelidx] = max_points
+            else:
+                num_points_per_voxel[voxelidx] = max_points_in_radius
+            #
+            # if max_points_in_radius > 100:
+            #     print("*"*20)
+            #     print("[debug] max_points_in_radius: ", max_points_in_radius)
+            #     print("[debug] all voxel_points: ", voxel_points.shape[0])
+            #     print("[debug] num_points_per_voxel[voxelidx]: ", num_points_per_voxel[voxelidx])
+            #     print("[debug] voxels[voxelidx]: ", voxels[voxelidx])
+
+    return voxel_num
 
 @numba.jit(nopython=True)
 def _points_to_voxel_reverse_kernel(points,
