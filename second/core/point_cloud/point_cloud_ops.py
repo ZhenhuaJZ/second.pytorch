@@ -267,15 +267,13 @@ def _points_to_voxel_dense_sample_v2(points,
                 temp_points = np.zeros(shape = (max_points ,points.shape[-1]), dtype = points.dtype)
                 temp_points[:index] = voxel_points
                 voxels[voxelidx] = temp_points
-                print("[debug-0], voxelsidx : ", voxelidx)
-                print("[debug-1], voxels[] : ", voxels[voxelidx])
+                # print("[debug-0], voxelsidx : ", voxelidx)
+                # print("[debug-1], voxels[] : ", voxels[voxelidx])
                 num_points_per_voxel[voxelidx] = index
-                # print("[debug-2] voxels[voxelidx]: ", voxels[voxelidx])
 
             else:
                 # print("[debug] number points in voxel > 100 : ", voxel_points.shape)
                 temp_points = np.zeros(shape = (index ,points.shape[-1]), dtype = points.dtype)
-                num_point_in_radius = 0
                 max_points_in_radius = -1
 
                 # index could be random ???
@@ -311,7 +309,8 @@ def _points_to_voxel_dense_sample_v2(points,
             #     print("[debug] max_points_in_radius: ", max_points_in_radius)
             #     print("[debug] all voxel_points: ", voxel_points.shape[0])
             #     print("[debug] num_points_per_voxel[voxelidx]: ", num_points_per_voxel[voxelidx])
-            #     print("[debug] voxels[voxelidx]: ", voxels[voxelidx])
+                print("[debug] voxelidx: ", voxelidx)
+                print("[debug] voxels[voxelidx]: ", voxels[voxelidx])
 
     return voxel_num
 
