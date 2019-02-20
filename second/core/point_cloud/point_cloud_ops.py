@@ -266,8 +266,10 @@ def _points_to_voxel_dense_sample_v2(points,
             if index < max_points:
                 temp_points = np.zeros(shape = (max_points ,points.shape[-1]), dtype = points.dtype)
                 temp_points[:index] = voxel_points
+                print("[debug-1] temp_points[:index]: ", temp_points[:index])
                 voxels[voxelidx] = temp_points
                 num_points_per_voxel[voxelidx] = index
+                # print("[debug-2] voxels[voxelidx]: ", voxels[voxelidx])
 
             else:
                 # print("[debug] number points in voxel > 100 : ", voxel_points.shape)
@@ -300,6 +302,8 @@ def _points_to_voxel_dense_sample_v2(points,
                     num_points_per_voxel[voxelidx] = max_points
                 else:
                     num_points_per_voxel[voxelidx] = max_points_in_radius
+
+                # print("[debug-2] voxels[voxelidx]: ", voxels[voxelidx])
             #
             # if max_points_in_radius > 100:
             #     print("*"*20)
@@ -466,7 +470,7 @@ def points_to_voxel(points,
         pre_sample_max_points = max_points + 100
     voxels = np.zeros(
         shape=(max_voxels, pre_sample_max_points, points.shape[-1]), dtype=points.dtype)
-    print("[debug] voxels shape", voxels.shape)
+    # print("[debug] voxels shape", voxels.shape)
     coors = np.zeros(shape=(max_voxels, 3), dtype=np.int32)
     if reverse_index:
         # Ran here
