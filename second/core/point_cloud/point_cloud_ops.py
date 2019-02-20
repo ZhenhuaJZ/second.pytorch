@@ -260,7 +260,7 @@ def _points_to_voxel_dense_sample_v2(points,
             voxel_points = points[mask,:]
             max_points_in_radius = -1
             index = voxel_points.shape[0]
-            print("[debug] number points in voxel", voxel_points.shape)
+            # print("[debug] number points in voxel", voxel_points.shape)
             # Create a temprarely container for sampling
             if index < 100:
                 temp_points = np.zeros(shape = (100 ,points.shape[-1]), dtype = points.dtype)
