@@ -210,6 +210,7 @@ def _points_to_voxel_dense_sample_v2(points,
                                     max_points=35,
                                     max_voxels=20000):
     N = points.shape[0]
+    print("[debug] number of points ", N)
     # ndim = points.shape[1] - 1
     ndim = 3
     ndim_minus_1 = ndim - 1
@@ -259,7 +260,7 @@ def _points_to_voxel_dense_sample_v2(points,
             voxel_points = points[mask,:]
             max_points_in_radius = -1
             index = voxel_points.shape[0]
-
+            print"([debug] number points in voxel", voxel_points.shape)
             # Create a temprarely container for sampling
             if index < 100:
                 temp_points = np.zeros(shape = (100 ,points.shape[-1]), dtype = points.dtype)
