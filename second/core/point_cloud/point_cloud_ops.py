@@ -211,7 +211,7 @@ def _points_to_voxel_dense_sample_v2(points,
                                     max_voxels=20000):
     N = points.shape[0]
     # print("[debug] number of points ", N)
-    print("[debug] max_points ", max_points)
+    # print("[debug] max_points ", max_points)
     # ndim = points.shape[1] - 1
     ndim = 3
     ndim_minus_1 = ndim - 1
@@ -466,6 +466,7 @@ def points_to_voxel(points,
         pre_sample_max_points = max_points
     voxels = np.zeros(
         shape=(max_voxels, pre_sample_max_points, points.shape[-1]), dtype=points.dtype)
+    print("[debug] voxels shape", voxels.shape)
     coors = np.zeros(shape=(max_voxels, 3), dtype=np.int32)
     if reverse_index:
         # Ran here
