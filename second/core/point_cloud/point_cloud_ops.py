@@ -480,8 +480,8 @@ def points_to_voxel(points,
     coors = np.zeros(shape=(max_voxels, 3), dtype=np.int32)
     if reverse_index:
         # Ran here
-        # voxel_num = _points_to_voxel_dense_sample(
-        voxel_num =_points_to_voxel_dense_sample_v2(
+        voxel_num = _points_to_voxel_dense_sample(
+        # voxel_num =_points_to_voxel_dense_sample_v2(
         #voxel_num = _points_to_voxel_reverse_kernel(
             points, voxel_size, coors_range, num_points_per_voxel,
             coor_to_voxelidx, voxels, coors, pre_sample_max_points, max_voxels)
