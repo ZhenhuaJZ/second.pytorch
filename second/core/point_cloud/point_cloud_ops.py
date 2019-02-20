@@ -354,7 +354,7 @@ def points_to_voxel(points,
     coor_to_voxelidx = -np.ones(shape=voxelmap_shape, dtype=np.int32)
     pre_sample_max_points = max_points
     if dense_sample:
-        pre_sample_max_points = max_points + 100
+        pre_sample_max_points = max_points
     voxels = np.zeros(
         shape=(max_voxels, pre_sample_max_points, points.shape[-1]), dtype=points.dtype)
     coors = np.zeros(shape=(max_voxels, 3), dtype=np.int32)
