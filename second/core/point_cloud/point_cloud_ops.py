@@ -278,39 +278,45 @@ def _points_to_voxel_dense_sample_v2(points,
 
                 # index could be random ???
 
-                for i in range(index):
-                    distance = np.sqrt(np.sum(np.square(voxel_points[:,:2]-voxel_points[i][:2]), axis=1))
-                    seleted = np.sqrt(np.sum(np.square(voxel_points[:,:2]-voxel_points[i][:2]), axis=1)) < cluster_radius
-                    num_point_in_radius = len(distance[seleted])
+                # for i in range(index):
+                #     distance = np.sqrt(np.sum(np.square(voxel_points[:,:2]-voxel_points[i][:2]), axis=1))
+                #     seleted = np.sqrt(np.sum(np.square(voxel_points[:,:2]-voxel_points[i][:2]), axis=1)) < cluster_radius
+                #     num_point_in_radius = len(distance[seleted])
+                #
+                #     if num_point_in_radius > max_points_in_radius:
+                #         temp_points[:num_point_in_radius] = voxel_points[seleted]
+                #         voxels[voxelidx] = temp_points[:max_points]
+                #         max_points_in_radius = num_point_in_radius
+                #
+                # if max_points_in_radius > max_points:
+                #     num_points_per_voxel[voxelidx] = max_points
+                # else:
+                #     num_points_per_voxel[voxelidx] = max_points_in_radius
 
+                for i in range(index):
+                    temp_points[:] = 0
+                    num_point_in_radius = 0
+                    for j in range(index):
+                        distance = np.sqrt(np.sum(np.square(voxel_points[i][:2] - voxel_points[j][:2])))
+                        if distance < cluster_radius:
+                            temp_points[num_point_in_radius] = voxel_points[j]
+                            num_point_in_radius += 1
                     if num_point_in_radius > max_points_in_radius:
-                        temp_points[:num_point_in_radius] = voxel_points[seleted]
                         voxels[voxelidx] = temp_points[:max_points]
                         max_points_in_radius = num_point_in_radius
-
-                # for j in range(index):
-                #     distance = np.sqrt(np.sum(np.square(voxel_points[i][:2] - voxel_points[j][:2])))
-                #     if distance < cluster_radius:
-                #         temp_points[num_point_in_radius] = voxel_points[j]
-                #         num_point_in_radius += 1
-                # if num_point_in_radius > max_points_in_radius:
-                #     voxels[voxelidx] = temp_points[:max_points]
-                #     max_points_in_radius = num_point_in_radius
 
                 if max_points_in_radius > max_points:
                     num_points_per_voxel[voxelidx] = max_points
                 else:
                     num_points_per_voxel[voxelidx] = max_points_in_radius
-
-                # print("[debug-2] voxels[voxelidx]: ", voxels[voxelidx])
             #
             # if max_points_in_radius > 100:
             #     print("*"*20)
             #     print("[debug] max_points_in_radius: ", max_points_in_radius)
             #     print("[debug] all voxel_points: ", voxel_points.shape[0])
             #     print("[debug] num_points_per_voxel[voxelidx]: ", num_points_per_voxel[voxelidx])
-                print("[debug] voxelidx: ", voxelidx)
-                print("[debug] voxels[voxelidx]: ", voxels[voxelidx])
+                # print("[debug] voxelidx: ", voxelidx)
+                # print("[debug] voxels[voxelidx]: ", voxels[voxelidx])
 
     return voxel_num
 
