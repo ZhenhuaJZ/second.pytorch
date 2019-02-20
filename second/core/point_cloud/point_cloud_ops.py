@@ -267,7 +267,8 @@ def _points_to_voxel_dense_sample_v2(points,
                 temp_points = np.zeros(shape = (max_points ,points.shape[-1]), dtype = points.dtype)
                 temp_points[:index] = voxel_points
                 voxels[voxelidx] = temp_points
-                print("[debug-1], voxels[{}]: {} ".format(voxelidx, voxels[voxelidx]))
+                print("[debug-0], voxelsidx : ", voxelidx)
+                print("[debug-1], voxels[] : ", voxels[voxelidx])
                 num_points_per_voxel[voxelidx] = index
                 # print("[debug-2] voxels[voxelidx]: ", voxels[voxelidx])
 
