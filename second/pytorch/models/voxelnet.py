@@ -524,7 +524,6 @@ class eigenValueExtractor(nn.Module):
             eigen_matrix = torch.unsqueeze(eigen_matrix,0)
             eigen_matrix = torch.unsqueeze(eigen_matrix,0)
             eigen_feature[idx] = torch.reshape(self.block(eigen_matrix),(3,))
-        print("[debug] finish fe")
             # Older version using eigen value
             # eigen_values = torch.eig(eigen_matrix)[0][:,0]
             # eigen_values,_ = torch.sort(eigen_values, descending = False)

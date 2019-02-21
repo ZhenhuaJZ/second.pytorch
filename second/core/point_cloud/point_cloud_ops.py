@@ -59,7 +59,7 @@ def dense_sampling(voxels, dense_smp_voxels, coors, num_points_per_voxel, voxel_
             # print("[debug] tmp_points: ", tmp_points)
             if num_points_in_radius > num_max_points_in_radius:
                 num_max_points_in_radius = num_points_in_radius
-                most_points = tmp_points
+                most_points = np.copy(tmp_points)
         # After gone through all the c_idx, store only the maximum number of points
         # to its voxel index
         dense_smp_voxels[index] = most_points
