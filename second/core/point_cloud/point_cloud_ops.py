@@ -295,9 +295,10 @@ def _points_to_voxel_dense_sample_v2(points,
                   which less than max points
 
                   !!!!! need to be fixed : only need to create temp array length = max_points
+            pro: do not need to calculate radius center
             """
 
-            distance_matrix = np.sqrt(np.sum(np.square(voxel_points[:3]-pillar_center)))
+            distance_matrix = np.sqrt(np.sum(np.square(voxel_points[:3]-pillar_center), axis=1))
             dis_flag = np.argsort(distance_matrix)[:max_points]
             num_point_in_radius = len(distance_matrix[dis_flag])
             temp_points[:num_point_in_radius] = voxel_points[dis_flag]
@@ -305,6 +306,8 @@ def _points_to_voxel_dense_sample_v2(points,
             voxels[voxelidx] = temp_points[:max_points] # put points in temp container back to voxels
             num_points_per_voxel[voxelidx] = num_point_in_radius
 
+            if num_point_in_radius > max_points:
+                print("[debug] Found points > 100 -- break")
 
 
             ###################### loop all the points #########################
