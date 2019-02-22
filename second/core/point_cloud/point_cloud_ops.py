@@ -378,8 +378,8 @@ def _points_to_voxel_reverse_kernel(points,
         else:
             print("[debug] points[i] : ", points[i].shape)
             print("[debug] voxels : ", voxels.shape)
-            voxels = np.vstack((voxels,points[i]))
-            num_points_per_voxel[voxelidx] += 1
+            # voxels = np.vstack((voxels,points[i]))
+            # num_points_per_voxel[voxelidx] += 1
 
     return voxel_num
 
