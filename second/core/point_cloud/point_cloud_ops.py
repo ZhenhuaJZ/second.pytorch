@@ -271,26 +271,21 @@ def _points_to_voxel_dense_sample_v2(points,
 
             ##########################pillar center version#####################
 
-            pillar_center = np.sum(voxel_points[:,:2], axis=0)/index # center of xyz in pillar
+            pillar_center = np.sum(voxel_points[:,:3], axis=0)/index # center of xyz in pillar
             num_point_in_radius = 0
-            print("[debug] pillar_center : ", pillar_center)
 
             for i in range(index):
-                distance = np.sqrt(np.sum(np.square(voxel_points[i][:2]-pillar_center)))
+                distance = np.sqrt(np.sum(np.square(voxel_points[i][:3]-pillar_center)))
                 if distance < cluster_radius:
                     temp_points[num_point_in_radius] = voxel_points[i]
                     num_point_in_radius += 1
-                    print("[debug] num_point_in_radius : ", num_point_in_radius)
 
                 if num_point_in_radius > max_points:
-                    print("[debug] break")
+                    print("[debug] Found points > 100 -- break")
                     break
 
             voxels[voxelidx] = temp_points[:max_points] # put points in temp container back to voxels
             num_points_per_voxel[voxelidx] = num_point_in_radius
-            print("[debug-end]")
-            # print("[debug] num_points_per_voxel[voxelidx]: ", num_points_per_voxel[voxelidx].shape)
-            # print("[debug] voxels[voxelidx]: ", voxels[voxelidx].shape)
 
             ###################### loop all the points #########################
 
