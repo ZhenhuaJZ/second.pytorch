@@ -373,6 +373,14 @@ def _points_to_voxel_reverse_kernel(points,
         if num < max_points:
             voxels[voxelidx, num] = points[i]
             num_points_per_voxel[voxelidx] += 1
+
+        ######################expand array#####################################
+        else:
+            print("[debug] points[i] : ", points[i].shape)
+            print("[debug] voxels : ", voxels.shape)
+            voxels = np.vstack((voxels,points[i]))
+            num_points_per_voxel[voxelidx] += 1
+
     return voxel_num
 
 @numba.jit(nopython=True)
@@ -476,14 +484,14 @@ def points_to_voxel(points,
         pre_sample_max_points = max_points
     voxels = np.zeros(
         shape=(max_voxels, pre_sample_max_points, points.shape[-1]), dtype=points.dtype)
-    print("[debug] pre_sample_max_points : ", pre_sample_max_points)
-    print("[debug] voxels shape", voxels.shape)
+    # print("[debug] pre_sample_max_points : ", pre_sample_max_points)
+    # print("[debug] voxels shape", voxels.shape)
     coors = np.zeros(shape=(max_voxels, 3), dtype=np.int32)
     if reverse_index:
         # Ran here
         # voxel_num = _points_to_voxel_dense_sample(
-        voxel_num =_points_to_voxel_dense_sample_v2(
-        #voxel_num = _points_to_voxel_reverse_kernel(
+        # voxel_num =_points_to_voxel_dense_sample_v2(
+        voxel_num = _points_to_voxel_reverse_kernel(
             points, voxel_size, coors_range, num_points_per_voxel,
             coor_to_voxelidx, voxels, coors, pre_sample_max_points, max_voxels)
 
