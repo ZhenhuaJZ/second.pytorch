@@ -224,7 +224,8 @@ def _points_to_voxel_dense_sample_v2(points,
     mask = np.zeros(shape = (N,), dtype = np.bool_)
     mask_xyz = np.zeros(shape = (N, 3), dtype = np.bool_)
     # distant_point = np.zeros(shape = (points.shape[-1]), dtype = np.float32)
-    cluster_radius = voxel_size[0]/2 * 0.8
+    xy_plane_orth = np.sqrt(np.square(voxel_size[0]/2) + np.square(voxel_size[1]/2))
+    cluster_radius = np.sqrt(np.square(xy_plane_orth) + np.square(voxel_size[2]/2)) * 0.8
     # voxel_points =
     voxel_num = 0
     failed = False
@@ -271,26 +272,33 @@ def _points_to_voxel_dense_sample_v2(points,
 
             ##########################pillar center version#####################
 
-            pillar_center = np.sum(voxel_points[:,:2], axis=0)/index # center of xyz in pillar
+            pillar_center = np.sum(voxel_points[:,:3], axis=0)/index # center of xyz in pillar
             num_point_in_radius = 0
-            print("[debug] pillar_center : ", pillar_center)
 
             for i in range(index):
-                distance = np.sqrt(np.sum(np.square(voxel_points[i][:2]-pillar_center)))
+                distance = np.sqrt(np.sum(np.square(voxel_points[i][:3]-pillar_center)))
                 if distance < cluster_radius:
                     temp_points[num_point_in_radius] = voxel_points[i]
                     num_point_in_radius += 1
-                    print("[debug] num_point_in_radius : ", num_point_in_radius)
 
                 if num_point_in_radius > max_points:
-                    print("[debug] break")
+                    print("[debug] Found points > 100 -- break")
                     break
 
             voxels[voxelidx] = temp_points[:max_points] # put points in temp container back to voxels
             num_points_per_voxel[voxelidx] = num_point_in_radius
-            print("[debug-end]")
-            # print("[debug] num_points_per_voxel[voxelidx]: ", num_points_per_voxel[voxelidx].shape)
-            # print("[debug] voxels[voxelidx]: ", voxels[voxelidx].shape)
+
+            ###v2###
+
+            # distance_matrix = np.sqrt(np.sum(np.square(voxel_points[:3]-pillar_center))).desending
+            # dis_flag = distance_matrix < cluster_radius:
+            # num_point_in_radius = len(distance_matrix[dis_flag])
+            # temp_points[:num_point_in_radius] = voxel_points[dis_flag]
+            #
+            # voxels[voxelidx] = temp_points[:max_points] # put points in temp container back to voxels
+            # num_points_per_voxel[voxelidx] = num_point_in_radius
+
+
 
             ###################### loop all the points #########################
 
