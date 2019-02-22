@@ -280,6 +280,7 @@ def _points_to_voxel_dense_sample_v2(points,
                 if distance < cluster_radius:
                     temp_points[num_point_in_radius] = voxel_points[i]
                     num_point_in_radius += 1
+                    print("[debug] num_point_in_radius : ", num_point_in_radius)
 
                 if num_point_in_radius > max_points:
                     print("[debug] break")
@@ -287,7 +288,7 @@ def _points_to_voxel_dense_sample_v2(points,
 
             voxels[voxelidx] = temp_points[:max_points] # put points in temp container back to voxels
             num_points_per_voxel[voxelidx] = num_point_in_radius
-
+            print("[debug-end]")
             # print("[debug] num_points_per_voxel[voxelidx]: ", num_points_per_voxel[voxelidx].shape)
             # print("[debug] voxels[voxelidx]: ", voxels[voxelidx].shape)
 
