@@ -280,7 +280,7 @@ def _points_to_voxel_dense_sample_v2(points,
                     temp_points[num_point_in_radius] = voxel_points[i]
                     num_point_in_radius += 1
 
-                if num_point_in_radius >= max_points:
+                if num_point_in_radius > max_points:
                     break
 
             voxels[voxelidx] = temp_points[:max_points] # put points in temp container back to voxels
