@@ -270,7 +270,7 @@ def _points_to_voxel_dense_sample_v2(points,
 
 
             ##########################pillar center version#####################
-            
+
             pillar_center = np.sum(voxel_points[:,:3], axis=0)/index # center of xyz in pillar
             num_point_in_radius = 0
 
@@ -496,8 +496,8 @@ def points_to_voxel(points,
     if reverse_index:
         # Ran here
         # voxel_num = _points_to_voxel_dense_sample(
-        # voxel_num =_points_to_voxel_dense_sample_v2(
-        voxel_num = _points_to_voxel_reverse_kernel(
+        voxel_num =_points_to_voxel_dense_sample_v2(
+        # voxel_num = _points_to_voxel_reverse_kernel(
             points, voxel_size, coors_range, num_points_per_voxel,
             coor_to_voxelidx, voxels, coors, pre_sample_max_points, max_voxels)
 
