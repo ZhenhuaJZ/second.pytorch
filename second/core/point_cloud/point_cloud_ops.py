@@ -272,7 +272,9 @@ def _points_to_voxel_dense_sample_v2(points,
 
             ##########################pillar center version#####################
 
-            # pillar_center = np.sum(voxel_points[:,:3], axis=0)/index # center of xyz in pillar
+            pillar_center = np.sum(voxel_points[:,:3], axis=0)/index # center of xyz in pillar
+
+            #####v1###
             # num_point_in_radius = 0
             #
             # for i in range(index):
@@ -298,7 +300,7 @@ def _points_to_voxel_dense_sample_v2(points,
             pro: do not need to calculate radius center
             """
 
-            distance_matrix = np.sqrt(np.sum(np.square(voxel_points[:3]-pillar_center), axis=1))
+            distance_matrix = np.sqrt(np.sum(np.square(voxel_points[:,:3]-pillar_center), axis=1))
             dis_flag = np.argsort(distance_matrix)[:max_points]
             num_point_in_radius = len(distance_matrix[dis_flag])
             temp_points[:num_point_in_radius] = voxel_points[dis_flag]
