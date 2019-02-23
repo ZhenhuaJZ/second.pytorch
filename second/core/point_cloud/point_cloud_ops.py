@@ -94,10 +94,10 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
                 vaild_points_len +=1
 
         #if points in voxels less than 0.2 * max_points then skip the voxels
-        if vaild_points_len < max_points * 0.2:
-            continue
+        # if vaild_points_len < max_points * 0.2:
+            # continue
 
-        pillar_center = np.sum(points[:,:3], axis=0)/vaild_points_len # center of xyz in pillar
+        pillar_center = np.sum(valid_points[:vaild_points_len,:3], axis=0)/vaild_points_len # center of xyz in pillar
 
         ####v1##
         # for i in range(num_points):
@@ -714,6 +714,7 @@ def points_to_voxel(points,
         voxels = dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size, max_points)
         # print('dense_sampling_v3: {}s'.format(time() - tm))
         # dense_sampling_v2(voxels, num_points_per_voxel, voxel_size, max_points)
+        print("[debug] voxels : ", voxels.shape)
     # pcl_viewer(voxels.reshape(-1,points.shape[-1]))
     return voxels, coors, num_points_per_voxel
 
