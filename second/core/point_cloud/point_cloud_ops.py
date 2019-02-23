@@ -714,7 +714,6 @@ def points_to_voxel(points,
         voxels = dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size, max_points)
         # print('dense_sampling_v3: {}s'.format(time() - tm))
         # dense_sampling_v2(voxels, num_points_per_voxel, voxel_size, max_points)
-        print("[debug] voxels : ", voxels.shape)
     # pcl_viewer(voxels.reshape(-1,points.shape[-1]))
     return voxels, coors, num_points_per_voxel
 
