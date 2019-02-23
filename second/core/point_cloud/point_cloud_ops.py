@@ -96,20 +96,26 @@ def dense_sampling_v3(voxels, dense_smp_voxels, coors, num_points_per_voxel, vox
             continue
         pillar_center = np.sum(points[:,:3], axis=0)/vaild_points_len # center of xyz in pillar
 
-        # print("[debug-1] pillar_center : ", points[:,:3])
-        # print("[debug-2] vaild_points_len : ", vaild_points_len)
+        ####v1##
+        # for i in range(num_points):
+        #     if (points[i] == zero_point).all():
+        #         continue
+        #     distance = np.sqrt(np.sum(np.square(points[i][:3] - pillar_center)))
+        #     if distance < cluster_radius:
+        #         tmp_points[num_points_in_radius] = points[i]
+        #         num_points_per_voxel[index] += 1
+        #         num_points_in_radius +=1
+        #     # if stored points are already exceed maximum points, then break
+        #     if num_points_per_voxel[index] >= max_points :
+        #         break
 
-        for i in range(num_points):
-            if (points[i] == zero_point).all():
-                continue
-            distance = np.sqrt(np.sum(np.square(points[i][:3] - pillar_center)))
-            if distance < cluster_radius:
-                tmp_points[num_points_in_radius] = points[i]
-                num_points_per_voxel[index] += 1
-                num_points_in_radius +=1
-            # if stored points are already exceed maximum points, then break
-            if num_points_per_voxel[index] >= max_points :
-                break
+        ####v2##
+        #need to get rid off 0
+        distance_matrix = np.sqrt(np.sum(np.square(points[:,:3]-pillar_center), axis=1))
+        dis_flag = np.argsort(distance_matrix)[:max_points]
+        num_point_in_radius = len(dis_flag)
+        tmp_points[:num_point_in_radius] = points[dis_flag]
+        num_points_per_voxel[index] = num_point_in_radius
 
         dense_smp_voxels[index] = np.copy(tmp_points)
 
