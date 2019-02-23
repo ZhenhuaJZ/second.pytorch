@@ -289,9 +289,10 @@ def _points_to_voxel_dense_sample_v2(points,
 
             voxels[voxelidx] = temp_points[:max_points] # put points in temp container back to voxels
             num_points_per_voxel[voxelidx] = num_point_in_radius
-            
-            print("[debug] voxelidx ", voxelidx)
-            print("[debug] num_points_per_voxel[voxelidx] ", num_points_per_voxel[voxelidx])
+
+            if num_point_in_radius > 80:
+                print("[debug] voxelidx ", voxelidx)
+                print("[debug] num_points_per_voxel[voxelidx] ", num_points_per_voxel[voxelidx])
 
             ###v2###
             """
