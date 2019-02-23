@@ -80,7 +80,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, coors, num_points_per_voxel, vox
         points = voxels[index]
         tmp_points[:] = 0 #reset
         num_points_in_radius = 0
-        pillar_center = np.sum(points[:,:3], axis=0)/index # center of xyz in pillar
+        pillar_center = np.sum(points[:,:3], axis=0)/num_points # center of xyz in pillar
 
         for i in range(num_points):
             if (points[i] == zero_point).all():
@@ -94,7 +94,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, coors, num_points_per_voxel, vox
             if num_points_per_voxel[index] >= max_points :
                 break
 
-        dense_smp_voxels[index] = tmp_points
+        dense_smp_voxels[index] = np.copy(tmp_points)
 
     return dense_smp_voxels
 
@@ -656,8 +656,8 @@ def points_to_voxel(points,
     if reverse_index:
         # Ran here
         # voxel_num = _points_to_voxel_dense_sample(
-        voxel_num =_points_to_voxel_dense_sample_v3(
-        # voxel_num = _points_to_voxel_reverse_kernel(
+        # voxel_num =_points_to_voxel_dense_sample_v3(
+        voxel_num = _points_to_voxel_reverse_kernel(
             points, voxel_size, coors_range, num_points_per_voxel,
             coor_to_voxelidx, voxels, coors, pre_sample_max_points, max_voxels)
 
@@ -671,9 +671,9 @@ def points_to_voxel(points,
     num_points_per_voxel = num_points_per_voxel[:voxel_num]
     # print("[debug] voxels : ", voxels)
     #########Dense Sample###########
-    # if dense_sample:
-        # dense_smp_voxels = np.zeros(shape=(voxel_num,max_points,points.shape[-1]), dtype = points.dtype)
-        # voxels = dense_sampling(voxels, dense_smp_voxels, coors, num_points_per_voxel, voxel_size, max_points)
+    if dense_sample:
+        dense_smp_voxels = np.zeros(shape=(voxel_num,max_points,points.shape[-1]), dtype = points.dtype)
+        voxels = dense_sampling_v3(voxels, dense_smp_voxels, coors, num_points_per_voxel, voxel_size, max_points)
         # dense_sampling_v2(voxels, num_points_per_voxel, voxel_size, max_points)
     # pcl_viewer(voxels.reshape(-1,points.shape[-1]))
     return voxels, coors, num_points_per_voxel
