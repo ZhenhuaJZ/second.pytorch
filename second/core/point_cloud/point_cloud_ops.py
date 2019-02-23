@@ -637,8 +637,7 @@ def points_to_voxel(points,
     coors = coors[:voxel_num]
     voxels = voxels[:voxel_num]
     num_points_per_voxel = num_points_per_voxel[:voxel_num]
-    print("[debug] voxels.shape : ", voxels.shape)
-    print("[debug] num_points_per_voxel.shape : ", num_points_per_voxel.shape)
+    print("[debug] voxels : ", voxels)
     #########Dense Sample###########
     # if dense_sample:
         # dense_smp_voxels = np.zeros(shape=(voxel_num,max_points,points.shape[-1]), dtype = points.dtype)
