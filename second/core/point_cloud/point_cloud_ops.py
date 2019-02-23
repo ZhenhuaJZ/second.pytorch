@@ -323,8 +323,8 @@ def _points_to_voxel_dense_sample_v2(points,
             num_points_per_voxel[voxelidx] = num_point_in_radius
 
             if num_point_in_radius > 80:
-                print(voxels[voxelidx].shape)
-                print(num_points_per_voxel[voxelidx].shape)
+                print("[debug] voxels", voxels[voxelidx])
+                print("[debug] num_points_per_voxel ", num_points_per_voxel[voxelidx])
                 print("[debug] Found points > 80 -- break")
 
 
