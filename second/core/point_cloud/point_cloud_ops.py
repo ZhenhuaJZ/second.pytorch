@@ -305,7 +305,6 @@ def _points_to_voxel_dense_sample_v2(points,
             """
 
             """!!!!! need to be fixed : only need to create temp array length = max_points"""
-            print("[debug] max_points ", max_points)
             temp_points = np.zeros(shape = (max_points ,points.shape[-1]), dtype = points.dtype)
             #
             # if index < max_points:
