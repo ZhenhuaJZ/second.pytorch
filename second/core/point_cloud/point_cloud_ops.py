@@ -397,9 +397,9 @@ def _points_to_voxel_dense_sample_v3(points,
     mask = np.zeros(shape = (N,), dtype = np.bool_)
     mask_xyz = np.zeros(shape = (N, 3), dtype = np.bool_)
     # distant_point = np.zeros(shape = (points.shape[-1]), dtype = np.float32)
-    xy_plane_orth = np.sqrt(np.square(voxel_size[0]/2) + np.square(voxel_size[1]/2))
-    cluster_radius = np.sqrt(np.square(xy_plane_orth) + np.square(voxel_size[2]/2)) * 0.5 #1.6
-    # cluster_radius = voxel_size[0]/2 * 0.8
+    # xy_plane_orth = np.sqrt(np.square(voxel_size[0]/2) + np.square(voxel_size[1]/2))
+    # cluster_radius = np.sqrt(np.square(xy_plane_orth) + np.square(voxel_size[2]/2)) * 0.5 #1.6
+    cluster_radius = voxel_size[0]/2 * 0.8
     # voxel_points =
     voxel_num = 0
     failed = False
@@ -437,7 +437,7 @@ def _points_to_voxel_dense_sample_v3(points,
             max_points_in_radius = -1
             index = voxel_points.shape[0]
 
-            pillar_center = np.sum(voxel_points[:,:3], axis=0)/index # center of xyz in pillar
+            pillar_center = np.sum(voxel_points[:,:2], axis=0)/index # center of xyz in pillar
             # Create a temprarely container for sampling
             if index < 100:
                 temp_points = np.zeros(shape = (100 ,points.shape[-1]), dtype = points.dtype)
@@ -446,7 +446,7 @@ def _points_to_voxel_dense_sample_v3(points,
 
             num_point_in_radius = 0
             for i in range(index):
-                distance = np.sqrt(np.sum(np.square(voxel_points[i][:3] - pillar_center)))
+                distance = np.sqrt(np.sum(np.square(voxel_points[i][:2] - pillar_center)))
                 if distance < cluster_radius:
                     temp_points[num_point_in_radius] = voxel_points[i]
                     num_point_in_radius += 1
@@ -637,7 +637,7 @@ def points_to_voxel(points,
     coors = coors[:voxel_num]
     voxels = voxels[:voxel_num]
     num_points_per_voxel = num_points_per_voxel[:voxel_num]
-    print("[debug] voxels : ", voxels)
+    # print("[debug] voxels : ", voxels)
     #########Dense Sample###########
     # if dense_sample:
         # dense_smp_voxels = np.zeros(shape=(voxel_num,max_points,points.shape[-1]), dtype = points.dtype)
