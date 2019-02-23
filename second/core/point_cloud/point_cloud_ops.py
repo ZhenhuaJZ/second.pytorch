@@ -450,9 +450,6 @@ def _points_to_voxel_dense_sample_v3(points,
                 if distance < cluster_radius:
                     temp_points[num_point_in_radius] = voxel_points[i]
                     num_point_in_radius += 1
-                # if distance > cluster_radius:
-                #     print("[index] ", index)
-                #     print("[debug] distance ", distance)
 
             voxels[voxelidx] = temp_points[:max_points]
 
@@ -640,6 +637,7 @@ def points_to_voxel(points,
     coors = coors[:voxel_num]
     voxels = voxels[:voxel_num]
     num_points_per_voxel = num_points_per_voxel[:voxel_num]
+    print("[debug] voxels.shape : ", voxels.shape)
     #########Dense Sample###########
     # if dense_sample:
         # dense_smp_voxels = np.zeros(shape=(voxel_num,max_points,points.shape[-1]), dtype = points.dtype)
