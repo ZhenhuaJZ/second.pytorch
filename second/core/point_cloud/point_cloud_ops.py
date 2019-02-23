@@ -92,7 +92,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, coors, num_points_per_voxel, vox
 
         #if points in voxels less than 0.2 * max_points then skip the voxels
         if vaild_points_len < max_points * 0.2:
-            print("[debug] vaild_points_len : ", vaild_points_len)
+            # print("[debug] vaild_points_len : ", vaild_points_len)
             continue
         pillar_center = np.sum(points[:,:3], axis=0)/vaild_points_len # center of xyz in pillar
 
