@@ -276,6 +276,7 @@ def _points_to_voxel_dense_sample_v2(points,
 
             #####v1###
             num_point_in_radius = 0
+            temp_points[:] = 0
 
             for i in range(index):
                 distance = np.sqrt(np.sum(np.square(voxel_points[i][:3]-pillar_center)))
@@ -288,7 +289,10 @@ def _points_to_voxel_dense_sample_v2(points,
 
             voxels[voxelidx] = temp_points[:max_points] # put points in temp container back to voxels
             num_points_per_voxel[voxelidx] = num_point_in_radius
-            print("[debug] voxels[voxelidx] ", voxels[voxelidx])
+            
+            print("[debug] voxelidx ", voxelidx)
+            print("[debug] num_points_per_voxel[voxelidx] ", num_points_per_voxel[voxelidx])
+
             ###v2###
             """
             step1 calculate the points in voxels nearest to the center point
