@@ -552,7 +552,7 @@ def _points_to_voxel_reverse_kernel(points,
     coor = np.zeros(shape=(3, ), dtype=np.int32)
     voxel_num = 0
     failed = False
-    print("[debug] pre_sample_max_points : ", max_points)
+    # print("[debug] pre_sample_max_points : ", max_points)
     for i in range(N):
         failed = False
         for j in range(ndim):
