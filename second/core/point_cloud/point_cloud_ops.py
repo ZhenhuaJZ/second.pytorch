@@ -398,7 +398,7 @@ def _points_to_voxel_dense_sample_v3(points,
     mask_xyz = np.zeros(shape = (N, 3), dtype = np.bool_)
     # distant_point = np.zeros(shape = (points.shape[-1]), dtype = np.float32)
     xy_plane_orth = np.sqrt(np.square(voxel_size[0]/2) + np.square(voxel_size[1]/2))
-    cluster_radius = np.sqrt(np.square(xy_plane_orth) + np.square(voxel_size[2]/2)) * 0.8 #1.6
+    cluster_radius = np.sqrt(np.square(xy_plane_orth) + np.square(voxel_size[2]/2)) * 0.5 #1.6
     # cluster_radius = voxel_size[0]/2 * 0.8
     # voxel_points =
     voxel_num = 0
@@ -450,10 +450,10 @@ def _points_to_voxel_dense_sample_v3(points,
                 if distance < cluster_radius:
                     temp_points[num_point_in_radius] = voxel_points[i]
                     num_point_in_radius += 1
-                if distance > cluster_radius:
-                    print("[index] ", index)
-                    print("[debug] distance ", distance)
-                    
+                # if distance > cluster_radius:
+                #     print("[index] ", index)
+                #     print("[debug] distance ", distance)
+
             voxels[voxelidx] = temp_points[:max_points]
 
             if num_point_in_radius >= max_points:
