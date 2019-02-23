@@ -552,6 +552,7 @@ def _points_to_voxel_reverse_kernel(points,
     coor = np.zeros(shape=(3, ), dtype=np.int32)
     voxel_num = 0
     failed = False
+    print("[debug] pre_sample_max_points : ", max_points)
     for i in range(N):
         failed = False
         for j in range(ndim):
@@ -708,7 +709,7 @@ def points_to_voxel(points,
     # print("[debug] voxels : ", voxels)
     #########Dense Sample###########
     if dense_sample:
-        tm = time()
+        # tm = time()
         dense_smp_voxels = np.zeros(shape=(voxel_num,max_points,points.shape[-1]), dtype = points.dtype)
         voxels = dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size, max_points)
         # print('dense_sampling_v3: {}s'.format(time() - tm))
