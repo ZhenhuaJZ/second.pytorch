@@ -453,12 +453,11 @@ def _points_to_voxel_dense_sample_v3(points,
                     temp_points[num_point_in_radius] = voxel_points[i]
                     num_point_in_radius += 1
 
+            voxels[voxelidx] = temp_points[:max_points]
+            
             if num_point_in_radius >= max_points:
-                voxels[voxelidx] = temp_points[:max_points]
                 num_points_per_voxel[voxelidx] = max_points
-
             else:
-                voxels[voxelidx] = temp_points[:max_points]
                 num_points_per_voxel[voxelidx] = num_point_in_radius
 
     return voxel_num
