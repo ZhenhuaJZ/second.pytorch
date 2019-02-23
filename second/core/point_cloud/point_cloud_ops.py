@@ -65,6 +65,41 @@ def dense_sampling(voxels, dense_smp_voxels, coors, num_points_per_voxel, voxel_
     return dense_smp_voxels
 
 @numba.jit(nopython = True)
+def dense_sampling_v3(voxels, dense_smp_voxels, coors, num_points_per_voxel, voxel_size, max_points, voxel_ratio = 0.8):
+    voxel_indexes = voxels.shape[0]
+    num_points = voxels.shape[1]
+    ndim = voxels.shape[2]
+    points = np.zeros(shape = (num_points,ndim),dtype = np.float32)
+    tmp_points = np.zeros(shape = (max_points,ndim),dtype = np.float32)
+    zero_point = np.zeros(shape = (ndim,), dtype = np.float32)
+    # cluster_radius = voxel_size[0]/2 * voxel_ratio
+    xy_plane_orth = np.sqrt(np.square(voxel_size[0]/2) + np.square(voxel_size[1]/2))
+    cluster_radius = np.sqrt(np.square(xy_plane_orth) + np.square(voxel_size[2]/2)) * voxel_ratio
+
+    for index in range(voxel_indexes):
+        points = voxels[index]
+        tmp_points[:] = 0 #reset
+        num_points_in_radius = 0
+        pillar_center = np.sum(points[:,:3], axis=0)/index # center of xyz in pillar
+
+        for i in range(num_points):
+            if (points[i] == zero_point).all():
+                continue
+            distance = np.sqrt(np.sum(np.square(points[i][:3] - pillar_center)))
+            if distance < cluster_radius:
+                tmp_points[num_points_in_radius] = points[i]
+                num_points_per_voxel[index] += 1
+                num_points_in_radius +=1
+            # if stored points are already exceed maximum points, then break
+            if num_points_per_voxel[index] >= max_points :
+                break
+
+        dense_smp_voxels[index] = tmp_points
+
+    return dense_smp_voxels
+
+
+@numba.jit(nopython = True)
 def dense_sampling_v2(voxels, num_points_per_voxel, voxel_size, max_points, voxel_ratio = 0.8):
     voxel_indexes = voxels.shape[0]
     num_points = voxels.shape[1]
@@ -448,6 +483,7 @@ def _points_to_voxel_dense_sample_v3(points,
                 distance = np.sqrt(np.sum(np.square(voxel_points[i][:2] - pillar_center)))
                 if distance < cluster_radius:
                     temp_points[num_point_in_radius] = voxel_points[i]
+                    num_point_in_radius += 1
                     num_points_per_voxel[voxelidx] += 1
                 if num_points_per_voxel[voxelidx] >= max_points:
                     break
