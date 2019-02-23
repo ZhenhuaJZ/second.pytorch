@@ -81,11 +81,19 @@ def dense_sampling_v3(voxels, dense_smp_voxels, coors, num_points_per_voxel, vox
         tmp_points[:] = 0 #reset
         num_points_in_radius = 0
 
-        points_without_zero = (points[:,:3] != 0).all(axis=1)
-        vaild_points_len = len(points[:,:3][points_without_zero])
+        # points_without_zero = (points[:,:3] != 0).all(axis=1) #CAN NOT USE IN NUMBA
+        # vaild_points_len = len(points[:,:3][points_without_zero])
+
+        vaild_points_len = 0
+        for i in range(num_points):
+            points_without_zero = (points[i] != 0).all()
+            if points_without_zero == True:
+                vaild_points_len +=1
+
         pillar_center = np.sum(points[:,:3], axis=0)/vaild_points_len # center of xyz in pillar
 
-        print("[debug] pillar_center : ", points[:,:3])
+        print("[debug-1] pillar_center : ", points[:,:3])
+        print("[debug-2] vaild_points_len : ", vaild_points_len)
 
         for i in range(num_points):
             if (points[i] == zero_point).all():
