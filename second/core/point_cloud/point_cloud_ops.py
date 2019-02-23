@@ -284,12 +284,11 @@ def _points_to_voxel_dense_sample_v2(points,
                     num_point_in_radius += 1
 
                 if num_point_in_radius > max_points:
-                    print("[debug] Found points > 100 -- break")
                     break
 
             voxels[voxelidx] = temp_points[:max_points] # put points in temp container back to voxels
             num_points_per_voxel[voxelidx] = num_point_in_radius
-
+            print("[debug] voxels[voxelidx] ", voxels[voxelidx])
             ###v2###
             """
             step1 calculate the points in voxels nearest to the center point
