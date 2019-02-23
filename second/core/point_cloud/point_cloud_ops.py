@@ -318,13 +318,13 @@ def _points_to_voxel_dense_sample_v2(points,
             temp_points[:num_point_in_radius] = voxel_points[dis_flag]
 
             # to be fixed temp_points is enough
-            voxels[voxelidx] = temp_points[:max_points] # put points in temp container back to voxels
+            voxels[voxelidx] = temp_points # put points in temp container back to voxels
             num_points_per_voxel[voxelidx] = num_point_in_radius
 
-            if num_point_in_radius > 80:
-                print("[debug] voxels", voxels[voxelidx])
-                print("[debug] num_points_per_voxel ", num_points_per_voxel[voxelidx])
-                print("[debug] Found points > 80 -- break")
+            # if num_point_in_radius > 80:
+            #     print("[debug] voxels", voxels[voxelidx])
+            #     print("[debug] num_points_per_voxel ", num_points_per_voxel[voxelidx])
+            #     print("[debug] Found points > 80 -- break")
 
 
             ###################### loop all the points #########################
@@ -546,6 +546,7 @@ def points_to_voxel(points,
         voxel_num = _points_to_voxel_kernel(
             points, voxel_size, coors_range, num_points_per_voxel,
             coor_to_voxelidx, voxels, coors, max_points, max_voxels)
+    print("[debug] voxels shape ", voxels.shape)
     coors = coors[:voxel_num]
     voxels = voxels[:voxel_num]
     num_points_per_voxel = num_points_per_voxel[:voxel_num]
