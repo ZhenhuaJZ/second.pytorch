@@ -447,12 +447,13 @@ def _points_to_voxel_dense_sample_v3(points,
             num_point_in_radius = 0
             for i in range(index):
                 distance = np.sqrt(np.sum(np.square(voxel_points[i][:3] - pillar_center)))
-                print("[index] ", index)
-                print("[debug] distance ", distance)
                 if distance < cluster_radius:
                     temp_points[num_point_in_radius] = voxel_points[i]
                     num_point_in_radius += 1
-
+                if distance > cluster_radius:
+                    print("[index] ", index)
+                    print("[debug] distance ", distance)
+                    
             voxels[voxelidx] = temp_points[:max_points]
 
             if num_point_in_radius >= max_points:
