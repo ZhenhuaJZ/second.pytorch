@@ -436,7 +436,8 @@ def _points_to_voxel_dense_sample_v3(points,
             voxel_points = points[mask,:]
             index = voxel_points.shape[0]
 
-            pillar_center = np.sum(voxel_points[:,:2], axis=0).astype(np.float32)/index # center of xyz in pillar
+            pillar_center = np.sum(voxel_points[:,:2], axis=0)/index # center of xyz in pillar
+            pillar_center = pillar_center.astype(np.int32)
             # Create a temprarely container for sampling
             if index < 100:
                 temp_points = np.zeros(shape = (100 ,points.shape[-1]), dtype = points.dtype)
@@ -449,6 +450,8 @@ def _points_to_voxel_dense_sample_v3(points,
                 if distance < cluster_radius:
                     temp_points[num_point_in_radius] = voxel_points[i]
                     num_points_per_voxel[voxelidx] += 1
+                if num_points_per_voxel[voxelidx] >= max_points:
+                    break
 
             voxels[voxelidx] = temp_points[:max_points]
 
