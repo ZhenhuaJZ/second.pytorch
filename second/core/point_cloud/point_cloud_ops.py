@@ -84,7 +84,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         valid_points[:] = 0 #reset !!!
         num_points_in_radius = 0
         vaild_points_len = 0
-        
+
         for i in range(num_points):
             points_without_zero = (points[i] != 0).all()
             if points_without_zero == True:
@@ -112,22 +112,22 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         #         break
 
         ####v1.1## delete check zero
-        # for i in range(vaild_points_len):
-        #     distance = np.sqrt(np.sum(np.square(valid_points[i][:3] - pillar_center)))
-        #     if distance < cluster_radius:
-        #         tmp_points[num_points_in_radius] = valid_points[i]
-        #         num_points_per_voxel[index] += 1
-        #         num_points_in_radius +=1
-        #     # if stored points are already exceed maximum points, then break
-        #     if num_points_per_voxel[index] >= max_points :
-        #         break
+        for i in range(vaild_points_len):
+            distance = np.sqrt(np.sum(np.square(valid_points[i][:3] - pillar_center)))
+            if distance < cluster_radius:
+                tmp_points[num_points_in_radius] = valid_points[i]
+                num_points_per_voxel[index] += 1
+                num_points_in_radius +=1
+            # if stored points are already exceed maximum points, then break
+            if num_points_per_voxel[index] >= max_points :
+                break
 
         ####v2##
-        distance_matrix = np.sqrt(np.sum(np.square(valid_points[:vaild_points_len,:3]-pillar_center), axis=1))
-        dis_flag = np.argsort(distance_matrix)[:max_points]
-        num_point_in_radius = len(dis_flag)
-        tmp_points[:num_point_in_radius] = valid_points[:vaild_points_len][dis_flag]
-        num_points_per_voxel[index] = num_point_in_radius
+        # distance_matrix = np.sqrt(np.sum(np.square(valid_points[:vaild_points_len,:3]-pillar_center), axis=1))
+        # dis_flag = np.argsort(distance_matrix)[:max_points]
+        # num_point_in_radius = len(dis_flag)
+        # tmp_points[:num_point_in_radius] = valid_points[:vaild_points_len][dis_flag]
+        # num_points_per_voxel[index] = num_point_in_radius
 
         dense_smp_voxels[index] = np.copy(tmp_points)
 
