@@ -90,10 +90,12 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         """
         # print("[debug-1] index : ", index)
         for i in range(num_points):
-            print("[debug] points[i] : ", i)
-            print("[debug] points[i,:3] : ", points[i,:3])
+            # print("[debug] points[i] : ", i)
+            # print("[debug] points[i,:3] : ", points[i,:3])
             points_without_zero = (points[i,:3] != 0).all()
             if points_without_zero == True:
+                print("[debug] i : ", i)
+                print("[debug] points[i,:] : ", points[i])
                 valid_points[vaild_points_len] = points[i] # valid_points is used to get rid off the point only zero
                 vaild_points_len +=1
 
