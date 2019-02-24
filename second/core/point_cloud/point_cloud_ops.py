@@ -96,12 +96,11 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
                 vaild_points_len +=1
 
         #if points in voxels less than 0.2 * max_points then skip the voxels
-        # if vaild_points_len < max_points * 0.2:
-            # continue
+        if vaild_points_len < max_points * 0.2:
+            continue
 
         # pillar_center = np.sum(points[:,:3], axis=0)/vaild_points_len # center of xyz in pillar
         pillar_center = np.sum(valid_points[:vaild_points_len,:3], axis=0)/vaild_points_len
-        # pillar_center = np.array([0,0,0])
 
         ####v1##
         # for i in range(num_points):
@@ -120,11 +119,12 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
 
         for i in range(vaild_points_len):
             distance = np.sqrt(np.sum(np.square(valid_points[i][:3] - pillar_center)))
+            # if distance < cluster_radius:
             if distance < 100:
                 tmp_points[num_points_in_radius] = valid_points[i]
                 num_points_in_radius +=1
             else:
-                print("[debug] found error")
+                print("Found error")
             # if stored points are already exceed maximum points, then break
             if num_points_in_radius >= max_points :
                 num_points_per_voxel[index] = num_points_in_radius
