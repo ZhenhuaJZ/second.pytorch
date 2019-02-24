@@ -88,7 +88,6 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         """
         only keep the none zero point in one pillar
         """
-        # print("[debug-1] index : ", index)
         for i in range(num_points):
             points_without_zero = (points[i,:3] != 0).all()
             if points_without_zero == True:
@@ -96,11 +95,11 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
                 vaild_points_len +=1
 
         #if points in voxels less than 0.2 * max_points then skip the voxels
-        if vaild_points_len < max_points * 0.2:
-            continue
+        # if vaild_points_len < max_points * 0.2:
+            # continue
 
         # pillar_center = np.sum(points[:,:3], axis=0)/vaild_points_len # center of xyz in pillar
-        pillar_center = np.sum(valid_points[:vaild_points_len,:3], axis=0)/vaild_points_len
+        # pillar_center = np.sum(valid_points[:vaild_points_len,:3], axis=0)/vaild_points_len
 
         ####v1##
         # for i in range(num_points):
@@ -118,13 +117,11 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         ####v1.1## delete check zero
 
         for i in range(vaild_points_len):
-            distance = np.sqrt(np.sum(np.square(valid_points[i][:3] - pillar_center)))
+            # distance = np.sqrt(np.sum(np.square(valid_points[i][:3] - pillar_center)))
             # if distance < cluster_radius:
-            if distance < 100:
-                tmp_points[num_points_in_radius] = valid_points[i]
-                num_points_in_radius +=1
-            else:
-                print("Found error")
+            tmp_points[num_points_in_radius] = valid_points[i]
+            num_points_in_radius +=1
+
             # if stored points are already exceed maximum points, then break
             if num_points_in_radius >= max_points :
                 num_points_per_voxel[index] = num_points_in_radius
@@ -714,10 +711,10 @@ def points_to_voxel(points,
     num_points_per_voxel = num_points_per_voxel[:voxel_num]
     # print("[debug] voxels : ", voxels)
     #########Dense Sample###########
-    # if dense_sample:
+    if dense_sample:
         # tm = time()
-        # dense_smp_voxels = np.zeros(shape=(voxel_num,max_points,points.shape[-1]), dtype = points.dtype)
-        # voxels = dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size, max_points)
+        dense_smp_voxels = np.zeros(shape=(voxel_num,max_points,points.shape[-1]), dtype = points.dtype)
+        voxels = dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size, max_points)
         # print('dense_sampling_v3: {}s'.format(time() - tm))
         # dense_sampling_v2(voxels, num_points_per_voxel, voxel_size, max_points)
     # pcl_viewer(voxels.reshape(-1,points.shape[-1]))
