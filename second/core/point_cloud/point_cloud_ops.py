@@ -85,8 +85,12 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         num_points_in_radius = 0
         vaild_points_len = 0
 
+        """
+        only keep the none zero point in one pillar
+        """
         for i in range(num_points):
-            points_without_zero = (points[i] != 0).all()
+            # print("[debug] points[i,:3] : ", points[i,:3])
+            points_without_zero = (points[i,:3] != 0).all()
             if points_without_zero == True:
                 valid_points[vaild_points_len] = points[i] # valid_points is used to get rid off the point only zero
                 vaild_points_len +=1
@@ -95,8 +99,8 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         if vaild_points_len < max_points * 0.2:
             continue
 
-        pillar_center = np.sum(points[:,:3], axis=0)/vaild_points_len # center of xyz in pillar
-        #pillar_center = np.sum(vaild_points[:,:3], axis=0)/vaild_points_len
+        # pillar_center = np.sum(points[:,:3], axis=0)/vaild_points_len # center of xyz in pillar
+        pillar_center = np.sum(vaild_points[:,:3], axis=0)/vaild_points_len
 
         ####v1##
         # for i in range(num_points):
@@ -129,7 +133,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         # tmp_points[:num_point_in_radius] = valid_points[:vaild_points_len][dis_flag]
         # num_points_per_voxel[index] = num_point_in_radius
 
-        dense_smp_voxels[index] = np.copy(tmp_points)
+        dense_smp_voxels[index] = tmp_points
 
     return dense_smp_voxels
 
