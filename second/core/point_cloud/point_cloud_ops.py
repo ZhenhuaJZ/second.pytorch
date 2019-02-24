@@ -146,7 +146,6 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         # num_point_in_radius = len(dis_flag)
         # tmp_points[:num_point_in_radius] = valid_points[:vaild_points_len][dis_flag]
         # num_points_per_voxel[index] = num_point_in_radius
-        print("[debug]", tmp_points)
         dense_smp_voxels[index] = tmp_points
 
     return dense_smp_voxels
@@ -731,7 +730,7 @@ def points_to_voxel(points,
         voxels = dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size, max_points)
         # print('dense_sampling_v3: {}s'.format(time() - tm))
         # dense_sampling_v2(voxels, num_points_per_voxel, voxel_size, max_points)
-    # pcl_viewer(voxels.reshape(-1,points.shape[-1]))
+    pcl_viewer(voxels.reshape(-1,points.shape[-1]))
     return voxels, coors, num_points_per_voxel
 
 
