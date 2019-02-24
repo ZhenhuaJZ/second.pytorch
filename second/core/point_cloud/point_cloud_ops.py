@@ -94,8 +94,8 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
             # print("[debug] points[i,:3] : ", points[i,:3])
             points_without_zero = (points[i,:3] != 0).all()
             if points_without_zero == True:
-                print("[debug] i : ", i)
-                print("[debug] points[i,:] : ", points[i])
+                # print("[debug] i : ", i)
+                # print("[debug] points[i,:] : ", points[i])
                 valid_points[vaild_points_len] = points[i] # valid_points is used to get rid off the point only zero
                 vaild_points_len +=1
 
@@ -130,11 +130,12 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
                 tmp_points[num_points_in_radius] = valid_points[i]
                 # num_points_per_voxel[index] += 1
                 num_points_in_radius +=1
-            else:
-                print("[debug] Found out range")
+            # else:
+                # print("[debug] Found out range")
             # if stored points are already exceed maximum points, then break
             if num_points_in_radius >= max_points :
                 num_points_per_voxel[index] = num_points_in_radius
+                print("[debug] max_point > 100")
                 break
         # print("[debug-3.1] num_points_in_radius : ", num_points_in_radius)
         # print("[debug-3] num_points_per_voxel[index] : ", num_points_per_voxel[index])
@@ -144,7 +145,6 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         # num_point_in_radius = len(dis_flag)
         # tmp_points[:num_point_in_radius] = valid_points[:vaild_points_len][dis_flag]
         # num_points_per_voxel[index] = num_point_in_radius
-
         dense_smp_voxels[index] = tmp_points
 
     return dense_smp_voxels
