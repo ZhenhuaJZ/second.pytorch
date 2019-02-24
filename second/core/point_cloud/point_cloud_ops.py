@@ -88,8 +88,10 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         """
         only keep the none zero point in one pillar
         """
+        # print("[debug-1] index : ", index)
         for i in range(num_points):
-            # print("[debug] points[i,:3] : ", points[i,:3])
+            print("[debug] points[i] : ", i)
+            print("[debug] points[i,:3] : ", points[i,:3])
             points_without_zero = (points[i,:3] != 0).all()
             if points_without_zero == True:
                 valid_points[vaild_points_len] = points[i] # valid_points is used to get rid off the point only zero
@@ -118,7 +120,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         #         break
         # print("[debug] num_points_per_voxel[index] :", num_points_per_voxel[index])
         ####v1.1## delete check zero
-        print("[debug-1] index : ", index)
+        # print("[debug-1] index : ", index)
         # print("[debug-2] vaild_points_len : ", vaild_points_len)
         for i in range(vaild_points_len):
             distance = np.sqrt(np.sum(np.square(valid_points[i][:3] - pillar_center)))
