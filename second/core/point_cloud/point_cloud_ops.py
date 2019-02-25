@@ -71,9 +71,8 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
     num_points = voxels.shape[1]
     ndim = voxels.shape[2]
     # points = np.zeros(shape = (num_points,ndim),dtype = np.float32)
-    valid_points = np.zeros(shape = (num_points,ndim),dtype = np.float32)
+    # valid_points = np.zeros(shape = (num_points,ndim),dtype = np.float32)
     tmp_points = np.zeros(shape = (max_points,ndim),dtype = np.float32)
-    # zero_point = np.zeros(shape = (ndim,), dtype = np.float32)
     # cluster_radius = voxel_size[0]/2 * voxel_ratio
     xy_plane_orth = np.sqrt(np.square(voxel_size[0]/2) + np.square(voxel_size[1]/2))
     cluster_radius = np.sqrt(np.square(xy_plane_orth) + np.square(voxel_size[2]/2)) * voxel_ratio
@@ -81,7 +80,6 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
     for index in range(voxel_indexes):
         points = voxels[index]
         tmp_points[:] = 0 #reset !!!
-        valid_points[:] = 0 #reset !!!
         num_points_in_radius = 0
         valid_points_len = 0
 
@@ -91,46 +89,31 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         for i in range(num_points):
             points_without_zero = (points[i,:3] != 0).all()
             if points_without_zero == True:
-                valid_points[valid_points_len] = points[i] # valid_points is used to get rid off the point only zero
                 valid_points_len +=1
 
+        """error here dont use"""
         #if points in voxels less than 0.2 * max_points then skip the voxels
         # if valid_points_len < max_points * 0.2:
         #     num_points_per_voxel[index] = 1
         #     dense_smp_voxels[index] = tmp_points
         #     continue
 
-        # pillar_center = np.sum(points[:,:3], axis=0)/valid_points_len # center of xyz in pillar
-        pillar_center = np.sum(valid_points[:valid_points_len,:3], axis=0)/valid_points_len
+        """
+        calculate pillar center in a pillar
+        the denominator(valid_points_len) must without "zero" points
+        """
+        pillar_center = np.sum(points[:,:3], axis=0)/valid_points_len
 
         ####v1##
-        # for i in range(num_points):
-        #     if (points[i] == zero_point).all():
-        #         continue
-        #     distance = np.sqrt(np.sum(np.square(points[i][:3] - pillar_center)))
-        #     if distance < cluster_radius:
-        #         tmp_points[num_points_in_radius] = points[i]
-        #         num_points_per_voxel[index] += 1
-        #         num_points_in_radius +=1
-        #     # if stored points are already exceed maximum points, then break
-        #     if num_points_per_voxel[index] >= max_points :
-        #         break
-
-        ####v1.1## delete check zero
-
-        # print("[debug-0] befor points : ", valid_points_len)
         for i in range(valid_points_len):
-            distance = np.sqrt(np.sum(np.square(valid_points[i][:3] - pillar_center)))
+            distance = np.sqrt(np.sum(np.square(points[i][:3] - pillar_center)))
             if distance < cluster_radius: # cluster_radius = 1.60
-                tmp_points[num_points_in_radius] = valid_points[i]
+                tmp_points[num_points_in_radius] = points[i]
                 num_points_in_radius +=1
 
             # if stored points are already exceed maximum points, then break
             if num_points_in_radius >= max_points :
                 break
-        # print("[debug-1] after dense points : ", num_points_in_radius)
-        # if (valid_points_len - num_points_in_radius) > 0:
-        #     print("[debug-2] delta points : ", valid_points_len - num_points_in_radius)
 
         ####v2##
         # distance_matrix = np.sqrt(np.sum(np.square(valid_points[:valid_points_len,:3]-pillar_center), axis=1))
@@ -139,7 +122,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         # tmp_points[:num_points_in_radius] = valid_points[:valid_points_len][dis_flag]
 
         num_points_per_voxel[index] = num_points_in_radius
-        dense_smp_voxels[index] = np.copy(tmp_points)
+        dense_smp_voxels[index] = tmp_points
 
     return dense_smp_voxels
 
