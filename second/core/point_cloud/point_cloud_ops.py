@@ -100,6 +100,11 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         #     dense_smp_voxels[index] = tmp_points
         #     continue
 
+        if vaild_points_len == 0:
+            num_points_per_voxel[index] = 1
+            dense_smp_voxels[index] = tmp_points
+            continue
+
         # pillar_center = np.sum(points[:,:3], axis=0)/vaild_points_len # center of xyz in pillar
         pillar_center = np.sum(valid_points[:vaild_points_len,:3], axis=0)/vaild_points_len
 
