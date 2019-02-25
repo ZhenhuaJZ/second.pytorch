@@ -95,6 +95,9 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         calculate pillar center in a pillar
         the denominator(valid_points_len) must without "zero" points
         """
+        if valid_points_len == 0:
+            print("**" * 20)
+            
         pillar_center = np.sum(points[:,:2], axis=0)/valid_points_len
 
         ####v1##
