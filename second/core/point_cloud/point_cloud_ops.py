@@ -118,7 +118,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
 
         ####v1.1## delete check zero
 
-        print("[debug-0] befor points : ", valid_points_len)
+        # print("[debug-0] befor points : ", valid_points_len)
         for i in range(valid_points_len):
             distance = np.sqrt(np.sum(np.square(valid_points[i][:3] - pillar_center)))
             if distance < cluster_radius: # cluster_radius = 1.60
@@ -128,8 +128,9 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
             # if stored points are already exceed maximum points, then break
             if num_points_in_radius >= max_points :
                 break
-        print("[debug-1] after dense points : ", num_points_in_radius)
-        print("[debug-2] delta points : ", valid_points_len - num_points_in_radius)
+        # print("[debug-1] after dense points : ", num_points_in_radius)
+        if (valid_points_len - num_points_in_radius) > 0:
+            print("[debug-2] delta points : ", valid_points_len - num_points_in_radius)
         ####v2##
         # distance_matrix = np.sqrt(np.sum(np.square(valid_points[:valid_points_len,:3]-pillar_center), axis=1))
         # dis_flag = np.argsort(distance_matrix)[:max_points]
