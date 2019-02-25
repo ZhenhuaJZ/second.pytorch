@@ -103,8 +103,8 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         ####v1##
         for i in range(valid_points_len):
             distance = np.sqrt(np.sum(np.square(points[i][:2] - pillar_center)))
-            
-            if distance >= 0: # cluster_radius = 1.60
+
+            if distance > 0: # cluster_radius = 1.60
                 tmp_points[num_points_in_radius] = points[i]
                 num_points_in_radius +=1
 
@@ -118,7 +118,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         # num_points_in_radius = len(dis_flag)
         # tmp_points[:num_points_in_radius] = valid_points[:valid_points_len][dis_flag]
 
-        if num_points_per_voxel[index] == 0:
+        if num_points_in_radius == 0:
             print("[debug] FOUND ERROR !~~~~~~~~~~~~~~~~~~~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         num_points_per_voxel[index] = num_points_in_radius
         dense_smp_voxels[index] = tmp_points
