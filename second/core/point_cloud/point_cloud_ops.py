@@ -90,6 +90,11 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
             if points_without_zero == True:
                 valid_points_len +=1
 
+        # print("[debug-0] num_points_per_voxel[index] : ", num_points_per_voxel[index])
+        # print("[debug-1] valid_points_len : ", valid_points_len)
+        if valid_points_len = num_points_per_voxel[index]:
+            print("[debug] valid_points_len = num_points_per_voxel[index]")
+
         """error here dont use"""
         #if points in voxels less than 0.2 * max_points then skip the voxels
         # if valid_points_len < max_points * 0.2:
