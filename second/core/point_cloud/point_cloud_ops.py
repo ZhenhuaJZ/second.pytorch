@@ -86,10 +86,10 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
 
         """fixed the distance gap bug"""
         #if points in voxels less than 0.2 * max_points then skip the voxels
-        if valid_points_len < max_points * 0.1:
-            # num_points_per_voxel[index] = valid_points_len
-            dense_smp_voxels[index] = points[:max_points]
-            continue
+        # if valid_points_len < max_points * 0.1:
+        #     # num_points_per_voxel[index] = valid_points_len
+        #     dense_smp_voxels[index] = points[:max_points]
+        #     continue
 
         """
         calculate pillar center in a pillar
@@ -99,15 +99,15 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         pillar_center = np.sum(points[:,:3], axis=0)/valid_points_len
 
         ####v1##
-        for i in range(valid_points_len):
-            distance = np.sqrt(np.sum(np.square(points[i][:3] - pillar_center)))
-            if distance < cluster_radius: # cluster_radius = 1.60
-                tmp_points[num_points_in_radius] = points[i]
-                num_points_in_radius +=1
-
-            # if stored points are already exceed maximum points, then break
-            if num_points_in_radius >= max_points :
-                break
+        # for i in range(valid_points_len):
+        #     distance = np.sqrt(np.sum(np.square(points[i][:3] - pillar_center)))
+        #     if distance < cluster_radius: # cluster_radius = 1.60
+        #         tmp_points[num_points_in_radius] = points[i]
+        #         num_points_in_radius +=1
+        #
+        #     # if stored points are already exceed maximum points, then break
+        #     if num_points_in_radius >= max_points :
+        #         break
 
         ####v2##
         distance_matrix = np.sqrt(np.sum(np.square(points[:valid_points_len,:3] - pillar_center), axis=1))
