@@ -71,8 +71,8 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
     num_points = voxels.shape[1]
     ndim = voxels.shape[2]
     # points = np.zeros(shape = (num_points,ndim),dtype = np.float32)
-    valid_points = np.zeros(shape = (num_points,ndim),dtype = np.float32)
-    tmp_points = np.zeros(shape = (max_points,ndim),dtype = np.float32)
+    # valid_points = np.zeros(shape = (num_points,ndim),dtype = np.float32)
+    # tmp_points = np.zeros(shape = (max_points,ndim),dtype = np.float32)
     # zero_point = np.zeros(shape = (ndim,), dtype = np.float32)
     # cluster_radius = voxel_size[0]/2 * voxel_ratio
     xy_plane_orth = np.sqrt(np.square(voxel_size[0]/2) + np.square(voxel_size[1]/2))
@@ -80,8 +80,10 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
 
     for index in range(voxel_indexes):
         points = voxels[index]
-        tmp_points[:] = 0 #reset !!!
-        valid_points[:] = 0 #reset !!!
+        # tmp_points[:] = 0 #reset !!!
+        # valid_points[:] = 0 #reset !!!
+        valid_points = np.zeros(shape = (num_points,ndim),dtype = np.float32)
+        tmp_points = np.zeros(shape = (max_points,ndim),dtype = np.float32)
         num_points_in_radius = 0
         valid_points_len = 0
 
@@ -131,7 +133,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         # print("[debug-1] after dense points : ", num_points_in_radius)
         # if (valid_points_len - num_points_in_radius) > 0:
         #     print("[debug-2] delta points : ", valid_points_len - num_points_in_radius)
-        
+
         ####v2##
         # distance_matrix = np.sqrt(np.sum(np.square(valid_points[:valid_points_len,:3]-pillar_center), axis=1))
         # dis_flag = np.argsort(distance_matrix)[:max_points]
