@@ -71,7 +71,6 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
     num_points = voxels.shape[1]
     ndim = voxels.shape[2]
     # points = np.zeros(shape = (num_points,ndim),dtype = np.float32)
-    # valid_points = np.zeros(shape = (num_points,ndim),dtype = np.float32)
     tmp_points = np.zeros(shape = (max_points,ndim),dtype = np.float32)
     # cluster_radius = voxel_size[0]/2 * voxel_ratio
     xy_plane_orth = np.sqrt(np.square(voxel_size[0]/2) + np.square(voxel_size[1]/2))
@@ -106,10 +105,10 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
 
         ####v1##
         for i in range(valid_points_len):
-            distance = np.sqrt(np.sum(np.square(points[i][:3] - pillar_center)))
-            if distance < cluster_radius: # cluster_radius = 1.60
-                tmp_points[num_points_in_radius] = points[i]
-                num_points_in_radius +=1
+            # distance = np.sqrt(np.sum(np.square(points[i][:3] - pillar_center)))
+            # if distance < cluster_radius: # cluster_radius = 1.60
+            tmp_points[num_points_in_radius] = points[i]
+            num_points_in_radius +=1
 
             # if stored points are already exceed maximum points, then break
             if num_points_in_radius >= max_points :
