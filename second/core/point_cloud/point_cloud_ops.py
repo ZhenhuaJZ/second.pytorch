@@ -92,9 +92,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
 
         # print("[debug-0] num_points_per_voxel[index] : ", num_points_per_voxel[index])
         # print("[debug-1] valid_points_len : ", valid_points_len)
-        if valid_points_len == num_points_per_voxel[index]:
-            print("[debug] valid_points_len == num_points_per_voxel[index]")
-        else:
+        if valid_points_len != num_points_per_voxel[index]:
             print("[debug] not equal")
 
         """error here dont use"""
