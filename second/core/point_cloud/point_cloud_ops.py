@@ -71,9 +71,9 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
     num_points = voxels.shape[1]
     ndim = voxels.shape[2]
     tmp_points = np.zeros(shape = (max_points,ndim),dtype = np.float32)
-    cluster_radius = voxel_size[0]/2 * voxel_ratio # 0.06399
-    # xy_plane_orth = np.sqrt(np.square(voxel_size[0]/2) + np.square(voxel_size[1]/2))
-    # cluster_radius = np.sqrt(np.square(xy_plane_orth) + np.square(voxel_size[2]/2)) * voxel_ratio
+    # cluster_radius = voxel_size[0]/2 * voxel_ratio # 0.06399
+    xy_plane_orth = np.sqrt(np.square(voxel_size[0]/2) + np.square(voxel_size[1]/2))
+    cluster_radius = np.sqrt(np.square(xy_plane_orth) + np.square(voxel_size[2]/2)) * voxel_ratio
 
     for index in range(voxel_indexes):
         points = voxels[index]
@@ -98,12 +98,12 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         if valid_points_len == 0:
             print("**" * 20)
 
-        pillar_center = np.sum(points[:,:2], axis=0)/valid_points_len
+        pillar_center = np.sum(points[:,:3], axis=0)/valid_points_len
 
         ####v1##
         for i in range(valid_points_len):
-            distance = np.sqrt(np.sum(np.square(points[i][:2] - pillar_center)))
-            if distance < 0.06399: # cluster_radius = 1.60
+            distance = np.sqrt(np.sum(np.square(points[i][:3] - pillar_center)))
+            if distance < cluster_radius: # cluster_radius = 1.60
                 tmp_points[num_points_in_radius] = points[i]
                 num_points_in_radius +=1
 
