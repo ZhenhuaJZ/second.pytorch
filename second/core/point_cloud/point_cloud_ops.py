@@ -110,10 +110,10 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
                 break
 
         ####v2##
-        # distance_matrix = np.sqrt(np.sum(np.square(points[:,:3] - pillar_center), axis=1))
-        # dis_flag = np.argsort(distance_matrix)[:max_points]
-        # num_points_in_radius = len(dis_flag)
-        # tmp_points[:num_points_in_radius] = points[dis_flag]
+        distance_matrix = np.sqrt(np.sum(np.square(points[:valid_points_len,:3] - pillar_center), axis=1))
+        dis_flag = np.argsort(distance_matrix)[:max_points]
+        num_points_in_radius = len(dis_flag)
+        tmp_points[:num_points_in_radius] = points[:valid_points_len][dis_flag]
 
         num_points_per_voxel[index] = num_points_in_radius
         dense_smp_voxels[index] = tmp_points
@@ -318,37 +318,36 @@ def _points_to_voxel_dense_sample_v2(points,
             mask = (mask_xyz[:,0]*mask_xyz[:,1]*mask_xyz[:,2])#.astype(np.bool)
             voxel_points = points[mask,:]
             # max_points_in_radius = -1
-            index = voxel_points.shape[0]
-            # print("[debug] number points in voxel > 100 : ", voxel_points.shape)
-            # Create a temprarely container for sampling max_point default = 100
-            # if index < max_points:
-            #     temp_points = np.zeros(shape = (max_points ,points.shape[-1]), dtype = points.dtype)
-            # else:
-            #     temp_points = np.zeros(shape = (index ,points.shape[-1]), dtype = points.dtype)
+            valid_points_len = voxel_points.shape[0]
 
+            # Create a temprarely container for sampling max_point default = 100
+            if valid_points_len < max_points:
+                temp_points = np.zeros(shape = (max_points ,points.shape[-1]), dtype = points.dtype)
+            else:
+                temp_points = np.zeros(shape = (index ,points.shape[-1]), dtype = points.dtype)
 
             ##########################pillar center version#####################
+            if valid_points_len < max_points * 0.1:
+                num_points_per_voxel[voxelidx] = valid_points_len
+                voxels[voxelidx] = voxel_points
+                continue
 
-            pillar_center = np.sum(voxel_points[:,:3], axis=0)/index # center of xyz in pillar
+            pillar_center = np.sum(voxel_points[:,:3], axis=0)/valid_points_len # center of xyz in pillar
 
             #####v1###
-            # num_point_in_radius = 0
-            #
-            # for i in range(index):
-            #     distance = np.sqrt(np.sum(np.square(voxel_points[i][:3]-pillar_center)))
-            #     if distance < cluster_radius:
-            #         temp_points[num_point_in_radius] = voxel_points[i]
-            #         num_point_in_radius += 1
-            #
-            #     if num_point_in_radius >= max_points:
-            #         break
-            #
-            # voxels[voxelidx] = temp_points[:max_points] # put points in temp container back to voxels
-            # num_points_per_voxel[voxelidx] = num_point_in_radius
-            #
-            # if num_point_in_radius >= 100:
-            #     print("[debug] voxelidx ", voxelidx)
-            #     print("[debug] num_points_per_voxel[voxelidx] ", num_points_per_voxel[voxelidx])
+            num_point_in_radius = 0
+            for i in range(index):
+                distance = np.sqrt(np.sum(np.square(voxel_points[i][:3]-pillar_center)))
+                if distance < cluster_radius:
+                    temp_points[num_point_in_radius] = voxel_points[i]
+                    num_point_in_radius += 1
+
+                if num_point_in_radius >= max_points:
+                    break
+
+            voxels[voxelidx] = temp_points[:max_points] # put points in temp container back to voxels
+            num_points_per_voxel[voxelidx] = num_point_in_radius
+
 
             ###v2###
             """
@@ -362,27 +361,16 @@ def _points_to_voxel_dense_sample_v2(points,
             """
 
             """!!!!! need to be fixed : only need to create temp array length = max_points"""
-            temp_points = np.zeros(shape = (max_points ,points.shape[-1]), dtype = points.dtype)
+            # temp_points = np.zeros(shape = (max_points ,points.shape[-1]), dtype = points.dtype)
             #
-            # if index < max_points:
-            #     temp_points[:index] = voxel_points
-            #     voxels[voxelidx] = temp_points # put points in temp container back to voxels
-            #     num_points_per_voxel[voxelidx] = index
-
-            distance_matrix = np.sqrt(np.sum(np.square(voxel_points[:,:3]-pillar_center), axis=1))
-            dis_flag = np.argsort(distance_matrix)[:max_points]
-            num_point_in_radius = len(dis_flag)
-            temp_points[:num_point_in_radius] = voxel_points[dis_flag]
-
-            # to be fixed temp_points is enough
-            voxels[voxelidx] = temp_points # put points in temp container back to voxels
-            num_points_per_voxel[voxelidx] = num_point_in_radius
-
-            # if num_point_in_radius > 80:
-            #     print("[debug] voxels", voxels[voxelidx])
-            #     print("[debug] num_points_per_voxel ", num_points_per_voxel[voxelidx])
-            #     print("[debug] Found points > 80 -- break")
-
+            # distance_matrix = np.sqrt(np.sum(np.square(voxel_points[:,:3]-pillar_center), axis=1))
+            # dis_flag = np.argsort(distance_matrix)[:max_points]
+            # num_point_in_radius = len(dis_flag)
+            # temp_points[:num_point_in_radius] = voxel_points[dis_flag]
+            #
+            # # to be fixed temp_points is enough
+            # voxels[voxelidx] = temp_points # put points in temp container back to voxels
+            # num_points_per_voxel[voxelidx] = num_point_in_radius
 
             ###################### loop all the points #########################
 
@@ -400,33 +388,6 @@ def _points_to_voxel_dense_sample_v2(points,
             #     num_points_per_voxel[voxelidx] = max_points
             # else:
             #     num_points_per_voxel[voxelidx] = max_points_in_radius
-
-            ####################jim version#################################
-            # for i in range(index):
-            #     temp_points[:] = 0
-            #     num_point_in_radius = 0
-            #     for j in range(index):
-            #         distance = np.sqrt(np.sum(np.square(voxel_points[i][:2] - voxel_points[j][:2])))
-            #         if distance < cluster_radius:
-            #             temp_points[num_point_in_radius] = voxel_points[j]
-            #             num_point_in_radius += 1
-            #     if num_point_in_radius > max_points_in_radius:
-            #         voxels[voxelidx] = temp_points[:max_points]
-            #         max_points_in_radius = num_point_in_radius
-            #
-            # if max_points_in_radius > max_points:
-            #     num_points_per_voxel[voxelidx] = max_points
-            # else:
-            #     num_points_per_voxel[voxelidx] = max_points_in_radius
-
-
-            # if max_points_in_radius > 100:
-            #     print("*"*20)
-            #     print("[debug] max_points_in_radius: ", max_points_in_radius)
-            #     print("[debug] all voxel_points: ", voxel_points.shape[0])
-            #     print("[debug] num_points_per_voxel[voxelidx]: ", num_points_per_voxel[voxelidx])
-                # print("[debug] voxelidx: ", voxelidx)
-                # print("[debug] voxels[voxelidx]: ", voxels[voxelidx])
 
     return voxel_num
 
