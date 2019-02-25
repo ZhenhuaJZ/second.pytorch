@@ -95,8 +95,8 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
                 vaild_points_len +=1
 
         #if points in voxels less than 0.2 * max_points then skip the voxels
-        # if vaild_points_len < max_points * 0.2:
-            # continue
+        if vaild_points_len < max_points * 0.2:
+            continue
 
         # pillar_center = np.sum(points[:,:3], axis=0)/vaild_points_len # center of xyz in pillar
         # pillar_center = np.sum(valid_points[:vaild_points_len,:3], axis=0)/vaild_points_len
@@ -124,7 +124,6 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
 
             # if stored points are already exceed maximum points, then break
             if num_points_in_radius >= max_points :
-                num_points_per_voxel[index] = num_points_in_radius
                 break
 
         ####v2##
@@ -132,7 +131,8 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         # dis_flag = np.argsort(distance_matrix)[:max_points]
         # num_point_in_radius = len(dis_flag)
         # tmp_points[:num_point_in_radius] = valid_points[:vaild_points_len][dis_flag]
-        # num_points_per_voxel[index] = num_point_in_radius
+
+        num_points_per_voxel[index] = num_point_in_radius
         dense_smp_voxels[index] = tmp_points
 
     return dense_smp_voxels
