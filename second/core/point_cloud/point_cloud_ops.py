@@ -88,7 +88,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         #if points in voxels less than 0.2 * max_points then skip the voxels
         if valid_points_len < max_points * 0.1:
             # num_points_per_voxel[index] = valid_points_len
-            dense_smp_voxels[index] = points
+            dense_smp_voxels[index] = points[:max_points]
             continue
 
         """
