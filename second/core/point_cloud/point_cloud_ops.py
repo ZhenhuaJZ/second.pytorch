@@ -110,7 +110,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         #         break
 
         ####v2##
-        distance_matrix = np.sqrt(np.sum(np.square(points[:3] - pillar_center), axis=1))
+        distance_matrix = np.sqrt(np.sum(np.square(points[:,:3] - pillar_center), axis=1))
         dis_flag = np.argsort(distance_matrix)[:max_points]
         num_points_in_radius = len(dis_flag)
         tmp_points[:num_points_in_radius] = points[dis_flag]
