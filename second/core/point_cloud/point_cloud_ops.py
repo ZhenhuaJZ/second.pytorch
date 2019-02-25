@@ -72,6 +72,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
     ndim = voxels.shape[2]
     tmp_points = np.zeros(shape = (max_points,ndim),dtype = np.float32)
     cluster_radius = voxel_size[0]/2 * voxel_ratio
+    print(cluster_radius)
     # xy_plane_orth = np.sqrt(np.square(voxel_size[0]/2) + np.square(voxel_size[1]/2))
     # cluster_radius = np.sqrt(np.square(xy_plane_orth) + np.square(voxel_size[2]/2)) * voxel_ratio
 
