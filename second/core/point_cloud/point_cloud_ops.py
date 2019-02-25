@@ -105,7 +105,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         for i in range(valid_points_len):
             distance = np.sqrt(np.sum(np.square(points[i][:2] - pillar_center)))
 
-            if distance < 1.7: # cluster_radius = 1.60
+            if distance < 0.08: # cluster_radius = 1.60
                 tmp_points[num_points_in_radius] = points[i]
                 num_points_in_radius +=1
 
