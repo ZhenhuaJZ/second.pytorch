@@ -560,12 +560,16 @@ def covarianceMatrix(voxels, num_points, covar):
         covar[idx] = eigen_matrix
     return covar
 
+# TODO: Modular class function
 class eigenValueExtractorV2(nn.Module):
     def __init__(self):
         super(eigenValueExtractorV2, self).__init__()
         self.name = "eigenValueExtractor"
         Conv2d = nn.Conv2d
-        self.block = Sequential(Conv2d(in_channels = 1, out_channels = 3,kernel_size = 3),nn.ReLU())
+        BatchNorm2d = change_default_args(eps=1e-3, momentum=0.01)(nn.BatchNorm2d)
+        self.block = Sequential(Conv2d(in_channels = 1, out_channels = 3,kernel_size = 3),
+                                BatchNorm2d(3),
+                                nn.ReLU())
 
     def forward(self, covar):
         eigen_matrix = torch.unsqueeze(covar,1)
