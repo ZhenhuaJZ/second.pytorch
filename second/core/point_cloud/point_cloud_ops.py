@@ -94,7 +94,7 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
                 valid_points[vaild_points_len] = points[i] # valid_points is used to get rid off the point only zero
                 vaild_points_len +=1
 
-        if vaild_points_len == 0:
+        if vaild_points_len < 5:
             print("[debug] vaild_points_len : ", vaild_points_len)
         #if points in voxels less than 0.2 * max_points then skip the voxels
         # if vaild_points_len < max_points * 0.2:
