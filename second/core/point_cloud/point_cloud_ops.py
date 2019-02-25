@@ -84,12 +84,12 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         """
         valid_points_len = num_points_per_voxel[index]
 
-        """error here dont use"""
+        """fixed the distance gap bug"""
         #if points in voxels less than 0.2 * max_points then skip the voxels
-        # if valid_points_len < max_points * 0.2:
-        #     num_points_per_voxel[index] = 1
-        #     dense_smp_voxels[index] = tmp_points
-        #     continue
+        if valid_points_len < max_points * 0.1:
+            # num_points_per_voxel[index] = valid_points_len
+            dense_smp_voxels[index] = points
+            continue
 
         """
         calculate pillar center in a pillar
@@ -110,10 +110,10 @@ def dense_sampling_v3(voxels, dense_smp_voxels, num_points_per_voxel, voxel_size
         #         break
 
         ####v2##
-        distance_matrix = np.sqrt(np.sum(np.square(points[:,:3] - pillar_center), axis=1))
-        dis_flag = np.argsort(distance_matrix)[:max_points]
-        num_points_in_radius = len(dis_flag)
-        tmp_points[:num_points_in_radius] = points[dis_flag]
+        # distance_matrix = np.sqrt(np.sum(np.square(points[:,:3] - pillar_center), axis=1))
+        # dis_flag = np.argsort(distance_matrix)[:max_points]
+        # num_points_in_radius = len(dis_flag)
+        # tmp_points[:num_points_in_radius] = points[dis_flag]
 
         num_points_per_voxel[index] = num_points_in_radius
         dense_smp_voxels[index] = tmp_points
