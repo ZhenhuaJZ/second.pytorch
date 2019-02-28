@@ -235,7 +235,7 @@ def prep_pointcloud(input_dict,
 
     voxels, coordinates, num_points = voxel_generator.generate(
         points, max_voxels)
-
+    print("[debug] coordinates preprocess: ", coordinates.shape)
     example = {
         'voxels': voxels,
         'num_points': num_points,

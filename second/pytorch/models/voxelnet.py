@@ -607,7 +607,7 @@ class RPNV2(nn.Module):
         # torch.cuda.synchronize()
         # print("rpn forward time", time.time() - t)
         return ret_dict
-        
+
 class LossNormType(Enum):
     NormByNumPositives = "norm_by_num_positives"
     NormByNumExamples = "norm_by_num_examples"
@@ -778,6 +778,7 @@ class VoxelNet(nn.Module):
         batch_anchors = example["anchors"]
         batch_size_dev = batch_anchors.shape[0]
         t = time.time()
+        print("[debug] coordinates - voxelnet: ", coordinates.shape)
         # features: [num_voxels, max_num_points_per_voxel, 7]
         # num_points: [num_voxels]
         # coors: [num_voxels, 4]
