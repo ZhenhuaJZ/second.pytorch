@@ -240,6 +240,9 @@ def train(config_path,
                         net.clear_metrics()
                     data_iter = iter(dataloader)
                     example = next(data_iter)
+
+                print("[debug] example : ", example["coordinates"].shape)
+                
                 example_torch = example_convert_to_torch(example, float_dtype)
 
                 batch_size = example["anchors"].shape[0]
