@@ -778,7 +778,6 @@ class VoxelNet(nn.Module):
         batch_anchors = example["anchors"]
         batch_size_dev = batch_anchors.shape[0]
         t = time.time()
-        print("[debug] coordinates - voxelnet: ", coors.shape)
         # features: [num_voxels, max_num_points_per_voxel, 7]
         # num_points: [num_voxels]
         # coors: [num_voxels, 4]
