@@ -172,6 +172,7 @@ def train(config_path,
         training=True,
         voxel_generator=voxel_generator,
         target_assigner=target_assigner)
+    print("[debug], : "dataset)
     eval_dataset = input_reader_builder.build(
         eval_input_cfg,
         model_cfg,
@@ -183,7 +184,7 @@ def train(config_path,
         time_seed = np.array(time.time(), dtype=np.int32)
         np.random.seed(time_seed + worker_id)
         print(f"WORKER {worker_id} seed:", np.random.get_state()[1][0])
-    print("[debug] train - after input reader builder ", dataset['coordinates'])
+
     dataloader = torch.utils.data.DataLoader(
         dataset,
         batch_size=input_cfg.batch_size,
@@ -240,6 +241,8 @@ def train(config_path,
                         net.clear_metrics()
                     data_iter = iter(dataloader)
                     example = next(data_iter)
+
+                # print("[debug] example : ", example["coordinates"].shape)
 
                 example_torch = example_convert_to_torch(example, float_dtype)
 
