@@ -172,7 +172,7 @@ def train(config_path,
         training=True,
         voxel_generator=voxel_generator,
         target_assigner=target_assigner)
-    print("[debug], : "dataset)
+    print("[debug], : ", dataset)
     eval_dataset = input_reader_builder.build(
         eval_input_cfg,
         model_cfg,
