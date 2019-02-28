@@ -275,6 +275,7 @@ def prep_pointcloud(input_dict,
         coors = coordinates
         dense_voxel_map = box_np_ops.sparse_sum_for_anchors_mask(
             coors, tuple(grid_size[::-1][1:]))
+        print("[debug] coordinates preprocess-2: ", coors.shape)
         dense_voxel_map = dense_voxel_map.cumsum(0)
         dense_voxel_map = dense_voxel_map.cumsum(1)
         anchors_area = box_np_ops.fused_get_anchors_area(
@@ -307,6 +308,7 @@ def prep_pointcloud(input_dict,
             'reg_targets': targets_dict['bbox_targets'],
             'reg_weights': targets_dict['bbox_outside_weights'],
         })
+    print("[debug] coordinates preprocess-3: ", example['coordinates'].shape)
     return example
 
 
