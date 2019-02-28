@@ -68,6 +68,7 @@ def build(input_reader_config,
                          'input_reader_pb2.InputReader.')
     dataset = dataset_builder.build(input_reader_config, model_config,
                                     training, voxel_generator, target_assigner)
-    print("[debug] input_reader_builder.py dataset: ", dataset['coordinates'].shape)
+    print("[debug] input_reader_builder.py dataset: ", dataset)
+    print("[debug] input_reader_builder.py dataset.shape: ", dataset.shape)
     dataset = DatasetWrapper(dataset)
     return dataset
