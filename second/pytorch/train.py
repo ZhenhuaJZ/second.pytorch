@@ -201,7 +201,7 @@ def train(config_path,
         pin_memory=False,
         collate_fn=merge_second_batch)
     data_iter = iter(dataloader)
-    print("[debug] train.py data_iter - 1: ", data_iter)
+
     ######################
     # TRAINING
     ######################
