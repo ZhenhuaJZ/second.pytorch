@@ -364,5 +364,5 @@ def _read_and_prep_v9(info, root_path, num_point_features, prep_func):
     example["image_shape"] = input_dict["image_shape"]
     if "anchors_mask" in example:
         example["anchors_mask"] = example["anchors_mask"].astype(np.uint8)
-    print("[debug] process : example['coords'] ", example['coordinates'])
+    print("[debug] preprocess _read_and_prep_v9 ", example['coordinates'].shape)
     return example
