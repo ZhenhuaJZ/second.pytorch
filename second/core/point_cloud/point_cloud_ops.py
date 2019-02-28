@@ -14,7 +14,6 @@ def _points_to_voxel_reverse_kernel(points,
                                     coors,
                                     max_points=35,
                                     max_voxels=20000):
-    print("[voxel_size: ", voxel_size)
     # put all computations to one loop.
     # we shouldn't create large array in main jit code, otherwise
     # reduce performance
@@ -112,7 +111,7 @@ def points_to_voxel(points,
                      reverse_index=True,
                      max_voxels=20000):
     """convert kitti points(N, >=3) to voxels. This version calculate
-    everything in one loop. now it takes only 4.2ms(complete point cloud) 
+    everything in one loop. now it takes only 4.2ms(complete point cloud)
     with jit and 3.2ghz cpu.(don't calculate other features)
     Note: this function in ubuntu seems faster than windows 10.
 
@@ -124,7 +123,7 @@ def points_to_voxel(points,
             format: xyzxyz, minmax
         max_points: int. indicate maximum points contained in a voxel.
         reverse_index: boolean. indicate whether return reversed coordinates.
-            if points has xyz format and reverse_index is True, output 
+            if points has xyz format and reverse_index is True, output
             coordinates will be zyx format, but points in features always
             xyz format.
         max_voxels: int. indicate maximum voxels this function create.
