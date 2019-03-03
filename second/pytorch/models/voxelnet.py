@@ -487,6 +487,8 @@ class LossNormType(Enum):
     NormByNumPosNeg = "norm_by_num_pos_neg"
 
 
+
+# NOTE: Unused class
 class eigenValueExtractor(nn.Module):
     '''
     Version 1 of the eigenValueExtractor
@@ -551,7 +553,8 @@ def eigenExtractor(voxels, num_points, eigen_feature):
     """
     voxel_indexes = voxels.shape[0]
     eigen_feature = np.zeros(shape = (voxel_indexes,3), dtype = np.float32)
-    point_mean = np.zeros(shape = (3,), dtype = np.float32)
+    point_mean = np.zeros(shape = (1,3), dtype = np.float32)
+    voxel_point = np.zeros(shape = (1,3), dtype = np.float32)
     eigen_values = np.zeros(shape = (3,), dtype = np.float32)
     for idx in range(voxel_indexes):
         selected_points = voxels[idx][:num_points[idx],:3]
@@ -564,20 +567,19 @@ def eigenExtractor(voxels, num_points, eigen_feature):
             ndim = selected_points.shape[-1]
             # Calculate mean point inside voxel
             for i in range(ndim):
-                point_mean[i] = np.nanmean(selected_points[:,i])
+                point_mean[0,i] = np.nanmean(selected_points[:,i])
             n_points = selected_points.shape[0]
             eigen_matrix = np.zeros(shape = (3,3), dtype = np.float32)
             # Calculate covariance matrix
             for idx in range(n_points):
-                eigen_matrix += (selected_points[idx,:]-point_mean)*np.transpose(selected_points[idx,:]-point_mean)
+                voxel_point = np.expand_dims(selected_points[idx,:],0)
+                eigen_matrix += (voxel_point-point_mean)*np.transpose(voxel_point-point_mean)
             eigen_matrix /= n_points
         eigen_values = np.linalg.eigvals(eigen_matrix)
-        # print("[debug] eigen_values: ", eigen_values)
-        # eigen_values = np.sort(eigen_values)
-        # print("[debug] eigen_values sorted: ", eigen_values)
-        # eigen_feature[idx,0] = eigen_values[0]
-        # eigen_feature[idx,1] = eigen_values[2]-eigen_values[1]
-        # eigen_feature[idx,2] = eigen_values[1]-eigen_values[0]
+        eigen_values = np.sort(eigen_values)
+        eigen_feature[idx,0] = eigen_values[0]
+        eigen_feature[idx,1] = eigen_values[2]-eigen_values[1]
+        eigen_feature[idx,2] = eigen_values[1]-eigen_values[0]
         # Obtain eigen value from covariance matrix
 
     return eigen_feature
@@ -597,39 +599,63 @@ def covarianceMatrix(voxels, num_points, covar):
 
         else:
             ndim = selected_points.shape[-1]
+            # Calculate mean point inside voxel
             for i in range(ndim):
-                point_mean[i] = np.nanmean(selected_points[:,i])
-            # print("[debug] point mean: ", point_mean)
+                point_mean[0,i] = np.nanmean(selected_points[:,i])
             n_points = selected_points.shape[0]
             eigen_matrix = np.zeros(shape = (3,3), dtype = np.float32)
+            # Calculate covariance matrix
             for idx in range(n_points):
-                eigen_matrix += (selected_points[idx,:]-point_mean)*np.transpose(selected_points[idx,:]-point_mean)
+                voxel_point = np.expand_dims(selected_points[idx,:],0)
+                eigen_matrix += (voxel_point-point_mean)*np.transpose(voxel_point-point_mean)
             eigen_matrix /= n_points
-        covar[idx] = eigen_matrix
     return covar
 
 # TODO: Modular class function
-class eigenValueExtractorV2(nn.Module):
-    def __init__(self):
-        super(eigenValueExtractorV2, self).__init__()
-        self.name = "eigenValueExtractor"
+class covarianceConvolution(nn.Module):
+    def __init__(self, num_filters, kernel_size, padding):
+        super(covarianceConvolution, self).__init__()
         Conv2d = nn.Conv2d
         BatchNorm2d = change_default_args(eps=1e-3, momentum=0.01)(nn.BatchNorm2d)
-        self.block = Sequential(Conv2d(in_channels = 1, out_channels = 4, kernel_size = 3, padding = 1),
-                                BatchNorm2d(4),
-                                nn.ReLU(),
-                                Conv2d(in_channels = 4, out_channels = 8, kernel_size = 3, padding = 1),
-                                BatchNorm2d(8),
-                                nn.ReLU(),
-                                Conv2d(in_channels = 8, out_channels = 16, kernel_size = 3, padding = 0),
-                                BatchNorm2d(16),
-                                nn.ReLU())
+        self.block = Sequential()
+        n_filters = num_filters.shape[0]
+        for i in range(n_filters):
+            if i == 0:
+                in_channels = 1
+            else:
+                in_channels = num_filters[i-1]
+            self.block.add(Conv2d(in_channels = in_channels,
+                                  out_channels = num_filters[i],
+                                  kernel_size = kernel_size[i],
+                                  padding = padding[i]))
+            self.block.add(batchNorm2d(4))
+            self.block.add(nn.ReLu())
 
-    def forward(self, covar):
-        eigen_matrix = torch.unsqueeze(covar,1)
-        eigen_feature = torch.squeeze(self.block(eigen_matrix),2)
+    def forward(self,voxels,num_points):
+        covar = np.zeros([voxels.shape[0], 3 ,3])
+        covar = covarianceMatrix(voxels.cpu().numpy(), num_points.cpu().numpy(), covar)
+        covar = torch.from_numpy(covar).to(voxels.device).type(torch.cuda.FloatTensor)
+        covar = torch.unsqueeze(covar,1)
+        eigen_feature = torch.squeeze(self.block(covar),2)
         eigen_feature = torch.squeeze(eigen_feature,2)
         return eigen_feature
+
+class eigenValueDescriptor(nn.Module):
+    def __init__(self):
+        super(eigenValueExtractorV3, self).__init__()
+        self.BatchNorm2d = change_default_args(eps=1e-3, momentum=0.01)(nn.BatchNorm2d)
+        self.BatchNorm2d = self.BatchNorm2d(3)
+
+    def forward(self, voxels, num_points):
+        new_voxel_features = np.zeros([voxels.shape[0],3], dtype = np.float32)
+        new_voxel_features = eigenExtractor(voxels.cpu().numpy(), num_points.cpu().numpy(), new_voxel_features)
+        new_voxel_features = torch.from_numpy(new_voxel_features).to(voxels.device).type(torch.cuda.FloatTensor)
+        new_voxel_features = torch.unsqueeze(new_voxel_features,2)
+        new_voxel_features = torch.unsqueeze(new_voxel_features,2)
+        new_voxel_features = self.BatchNorm2d(new_voxel_features)
+        new_voxel_features = torch.squeeze(new_voxel_features,2)
+        new_voxel_features = torch.squeeze(new_voxel_features,2)
+        return new_voxel_features
 
 class VoxelNet(nn.Module):
     def __init__(self,
@@ -639,6 +665,11 @@ class VoxelNet(nn.Module):
                  vfe_class_name="VoxelFeatureExtractor",
                  vfe_num_filters=[32, 128],
                  with_distance=False,
+                 descriptor_feature_name="eigenValueDescriptor",
+                 learned_descriptor_name="covarianceConvolution",
+                 learned_kernel_size=[3],
+                 learned_num_filters=[3],
+                 learned_padding=[0],
                  middle_class_name="SparseMiddleExtractor",
                  middle_num_filters_d1=[64],
                  middle_num_filters_d2=[64, 64],
@@ -718,11 +749,21 @@ class VoxelNet(nn.Module):
             use_norm,
             num_filters=vfe_num_filters,
             with_distance=with_distance)
-        # self.eve = eigenValueExtractorV1()
-        self.eve = eigenValueExtractorV2()
-        bn = nn.BatchNorm2d(3)
 
-        vfe_num_filters[-1] += 16
+        extra_feat_num = 0
+        self.self_learn_descriptor_name = self_learn_descriptor_name
+        if self_learn_descriptor_name == "covarianceConvolution":
+            self.self_learn_descriptor = covarianceConvolution(self_learn_num_filters,
+                                                                    self_learn_kernel_size,
+                                                                    self_learn_padding)
+            extra_feat_num += self_learn_num_filters[-1]
+
+        self.descriptor_feature_name = descriptor_feature_name
+        if descriptor_feature_name == "eigenValueDescriptor":
+            self.descriptor_feature = eigenValueDescriptor()
+            extra_feat_num += 3
+
+        vfe_num_filters[-1] += extra_feat_num
         if middle_class_name == "PointPillarsScatter":
             self.middle_feature_extractor = PointPillarsScatter(output_shape=output_shape,
                                                                 num_input_features=vfe_num_filters[-1])
@@ -804,24 +845,16 @@ class VoxelNet(nn.Module):
 
         voxel_features = self.voxel_feature_extractor(voxels, num_points, coors)
         ## NOTE: Incooperate local feature
-        ################ Eigen V1 #################
-        # new_voxel_features = self.eve(voxels, num_points)
 
-        ################ Eigen V2 Covariance convolution #################
-        covar = np.zeros([voxels.shape[0], 3 ,3])
-        covar = covarianceMatrix(voxels.cpu().numpy(), num_points.cpu().numpy(), covar)
-        covar = torch.from_numpy(covar).to(voxels.device).type(torch.cuda.FloatTensor)
-        # new_voxel_features = self.eve(voxels, num_points)
-        new_voxel_features = self.eve(covar)
-        print("[debug] new feature: ", new_voxel_features.shape)
+        if self.descriptor_feature_name:
+            print("run descriptor_feature")
+            descriptor_feature = self.descriptor_feature(voxels, num_points)
+            voxel_features = torch.cat((voxel_features, descriptor_feature), 1)
 
-        ################# Eigen V3 using numba ####################################
-        # new_voxel_features = np.zeros([voxels.shape[0],3], dtype = np.float32)
-        # new_voxel_features = eigenExtractor(voxels.cpu().numpy(), num_points.cpu().numpy(), new_voxel_features)
-        # new_voxel_features = torch.from_numpy(new_voxel_features).to(voxels.device).type(torch.cuda.FloatTensor)
-        # new_voxel_features = bn(new_voxel_features)
-
-        voxel_features = torch.cat((voxel_features, new_voxel_features), 1)
+        if self.self_learn_descriptor_name:
+            print("run descriptor_feature")
+            descriptor_feature = self.self_learn_descriptor(voxels, num_points)
+            voxel_features = torch.cat((voxel_features, descriptor_feature), 1)
 
         if self._use_sparse_rpn:
             preds_dict = self.sparse_rpn(voxel_features, coors, batch_size_dev)
