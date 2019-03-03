@@ -588,7 +588,7 @@ def eigenExtractor(voxels, num_points, eigen_feature):
 def covarianceMatrix(voxels, num_points, covar):
     voxel_indexes = voxels.shape[0]
     eigen_feature = np.zeros(shape = (voxel_indexes,3), dtype = np.float32)
-    point_mean = np.zeros(shape = (3,), dtype = np.float32)
+    point_mean = np.zeros(shape = (3), dtype = np.float32)
     for idx in range(voxel_indexes):
         selected_points = voxels[idx][:num_points[idx],:3]
         if num_points[idx] == 0:
@@ -601,7 +601,7 @@ def covarianceMatrix(voxels, num_points, covar):
             ndim = selected_points.shape[-1]
             # Calculate mean point inside voxel
             for i in range(ndim):
-                point_mean[0,i] = np.nanmean(selected_points[:,i])
+                point_mean[i] = np.nanmean(selected_points[:,i])
             n_points = selected_points.shape[0]
             eigen_matrix = np.zeros(shape = (3,3), dtype = np.float32)
             # Calculate covariance matrix
@@ -618,7 +618,7 @@ class covarianceConvolution(nn.Module):
         Conv2d = nn.Conv2d
         BatchNorm2d = change_default_args(eps=1e-3, momentum=0.01)(nn.BatchNorm2d)
         self.block = Sequential()
-        n_filters = num_filters.shape[0]
+        n_filters = len(num_filters)
         for i in range(n_filters):
             if i == 0:
                 in_channels = 1
@@ -628,8 +628,8 @@ class covarianceConvolution(nn.Module):
                                   out_channels = num_filters[i],
                                   kernel_size = kernel_size[i],
                                   padding = padding[i]))
-            self.block.add(batchNorm2d(4))
-            self.block.add(nn.ReLu())
+            self.block.add(BatchNorm2d(num_filters[i]))
+            self.block.add(nn.ReLU())
 
     def forward(self,voxels,num_points):
         covar = np.zeros([voxels.shape[0], 3 ,3])
@@ -642,7 +642,7 @@ class covarianceConvolution(nn.Module):
 
 class eigenValueDescriptor(nn.Module):
     def __init__(self):
-        super(eigenValueExtractorV3, self).__init__()
+        super(eigenValueDescriptor, self).__init__()
         self.BatchNorm2d = change_default_args(eps=1e-3, momentum=0.01)(nn.BatchNorm2d)
         self.BatchNorm2d = self.BatchNorm2d(3)
 
@@ -751,12 +751,12 @@ class VoxelNet(nn.Module):
             with_distance=with_distance)
 
         extra_feat_num = 0
-        self.self_learn_descriptor_name = self_learn_descriptor_name
-        if self_learn_descriptor_name == "covarianceConvolution":
-            self.self_learn_descriptor = covarianceConvolution(self_learn_num_filters,
-                                                                    self_learn_kernel_size,
-                                                                    self_learn_padding)
-            extra_feat_num += self_learn_num_filters[-1]
+        self.learned_descriptor_name = learned_descriptor_name
+        if learned_descriptor_name == "covarianceConvolution":
+            self.learned_descriptor = covarianceConvolution(learned_num_filters,
+                                                            learned_kernel_size,
+                                                            learned_padding)
+            extra_feat_num += learned_num_filters[-1]
 
         self.descriptor_feature_name = descriptor_feature_name
         if descriptor_feature_name == "eigenValueDescriptor":
@@ -851,9 +851,9 @@ class VoxelNet(nn.Module):
             descriptor_feature = self.descriptor_feature(voxels, num_points)
             voxel_features = torch.cat((voxel_features, descriptor_feature), 1)
 
-        if self.self_learn_descriptor_name:
-            print("run descriptor_feature")
-            descriptor_feature = self.self_learn_descriptor(voxels, num_points)
+        if self.learned_descriptor_name:
+            print("run learned")
+            descriptor_feature = self.learned_descriptor(voxels, num_points)
             voxel_features = torch.cat((voxel_features, descriptor_feature), 1)
 
         if self._use_sparse_rpn:

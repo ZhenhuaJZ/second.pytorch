@@ -9,9 +9,20 @@ import "second/protos/voxel_generator.proto";
 message VoxelNet {
   uint32 num_class = 1;
   message VoxelFeatureExtractor {
-    string module_class_name = 1;
-    repeated uint32 num_filters = 2;
-    bool with_distance = 3;
+    message descriptorFeature {
+      string module_class_name = 1;
+    }
+    descriptorFeature descriptor_feature = 1;
+    message learnedDescriptorFeature {
+      string module_class_name = 1;
+      repeated uint32 kernel_size = 2;
+      repeated uint32 num_filters = 3;
+      repeated uint32 padding = 4;
+    }
+    learnedDescriptorFeature learned_descriptor_feature = 2;
+    string module_class_name = 3;
+    repeated uint32 num_filters = 4;
+    bool with_distance = 5;
   }
   VoxelFeatureExtractor voxel_feature_extractor = 2;
   message MiddleFeatureExtractor {
