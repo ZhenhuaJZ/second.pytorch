@@ -2,6 +2,7 @@ import time
 from enum import Enum
 from functools import reduce
 import numba
+import math
 
 import numpy as np
 import sparseconvnet as scn
@@ -552,7 +553,7 @@ def eigenExtractor(voxels, num_points, eigen_feature):
     it takes already created new feature map and return a (n,3) new features
     """
     voxel_indexes = voxels.shape[0]
-    eigen_feature = np.zeros(shape = (voxel_indexes,3), dtype = np.float32)
+    # eigen_feature = np.zeros(shape = (voxel_indexes,num_features), dtype = np.float32)
     point_mean = np.zeros(shape = (1,3), dtype = np.float32)
     voxel_point = np.zeros(shape = (1,3), dtype = np.float32)
     eigen_values = np.zeros(shape = (3,), dtype = np.float32)
@@ -577,10 +578,32 @@ def eigenExtractor(voxels, num_points, eigen_feature):
             eigen_matrix /= n_points
         eigen_values = np.linalg.eigvals(eigen_matrix)
         eigen_values = np.sort(eigen_values)
-        eigen_feature[idx,0] = eigen_values[0]
-        eigen_feature[idx,1] = eigen_values[2]-eigen_values[1]
-        eigen_feature[idx,2] = eigen_values[1]-eigen_values[0]
-        # Obtain eigen value from covariance matrix
+        eig_2 = eigen_values[0]
+        eig_1 = eigen_values[1]
+        eig_0 = eigen_values[2]
+        # point-ness
+        eigen_feature[idx,0] = eig_2
+        # curve-ness
+        eigen_feature[idx,1] = eig_0-eig_1
+        # surface-ness
+        eigen_feature[idx,2] = eig_1-eig_0
+        # Linearity L
+        # eigen_feature[idx,3] = (eig_0-eig_1)/eig_0
+        # # Planarity P
+        # eigen_feature[idx,4] = (eig_1-eig_2)/eig_0
+        # # Sphericity S
+        # eigen_feature[idx,5] = eig_2/eig_0
+        # # Omnivariance O
+        # eigen_feature[idx,6] = (eig_0*eig_1*eig_2)**1/3
+        # # Anisotropy A
+        # eigen_feature[idx,7] = (eig_0-eig_2)/eig_0
+        # # Eigenentropy E
+        # eigen_feature[idx,8] = -eig_0*math.log(eig_0)-eig_1*math.log(eig_1)-eig_2*math.log(eig_2)
+        # # Sum
+        # eigen_feature[idx,9] = eig_0 + eig_1 + eig_2
+        # # Local surface variance
+        # eigen_feature[idx,10] = eig_2/(eig_0+eig_1+eig_2)
+        # # Obtain eigen value from covariance matrix
 
     return eigen_feature
 
@@ -641,13 +664,14 @@ class covarianceConvolution(nn.Module):
         return eigen_feature
 
 class eigenValueDescriptor(nn.Module):
-    def __init__(self):
+    def __init__(self, num_features):
         super(eigenValueDescriptor, self).__init__()
         self.BatchNorm2d = change_default_args(eps=1e-3, momentum=0.01)(nn.BatchNorm2d)
-        self.BatchNorm2d = self.BatchNorm2d(3)
+        self.BatchNorm2d = self.BatchNorm2d(num_features)
+        self.num_features = num_features
 
     def forward(self, voxels, num_points):
-        new_voxel_features = np.zeros([voxels.shape[0],3], dtype = np.float32)
+        new_voxel_features = np.zeros([voxels.shape[0], self.num_features], dtype = np.float32)
         new_voxel_features = eigenExtractor(voxels.cpu().numpy(), num_points.cpu().numpy(), new_voxel_features)
         new_voxel_features = torch.from_numpy(new_voxel_features).to(voxels.device).type(torch.cuda.FloatTensor)
         new_voxel_features = torch.unsqueeze(new_voxel_features,2)
@@ -760,8 +784,9 @@ class VoxelNet(nn.Module):
 
         self.descriptor_feature_name = descriptor_feature_name
         if descriptor_feature_name == "eigenValueDescriptor":
-            self.descriptor_feature = eigenValueDescriptor()
-            extra_feat_num += 3
+            num_features = 3
+            self.descriptor_feature = eigenValueDescriptor(num_features)
+            extra_feat_num += num_features
 
         vfe_num_filters[-1] += extra_feat_num
         if middle_class_name == "PointPillarsScatter":
@@ -847,12 +872,10 @@ class VoxelNet(nn.Module):
         ## NOTE: Incooperate local feature
 
         if self.descriptor_feature_name:
-            print("run descriptor_feature")
             descriptor_feature = self.descriptor_feature(voxels, num_points)
             voxel_features = torch.cat((voxel_features, descriptor_feature), 1)
 
         if self.learned_descriptor_name:
-            print("run learned")
             descriptor_feature = self.learned_descriptor(voxels, num_points)
             voxel_features = torch.cat((voxel_features, descriptor_feature), 1)
 

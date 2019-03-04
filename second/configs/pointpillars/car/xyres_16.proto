@@ -8,10 +8,10 @@ model: {
     num_class: 1
     voxel_feature_extractor: {
       descriptor_feature: {
-        module_class_name: ""
+        module_class_name: "eigenValueDescriptor"
       }
       learned_descriptor_feature: {
-        module_class_name: "covarianceConvolution"
+        module_class_name: ""
         kernel_size: [3, 3, 3]
         num_filters: [4, 8, 16]
         padding: [1, 1, 0]
