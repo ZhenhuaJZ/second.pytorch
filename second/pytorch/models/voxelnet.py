@@ -507,7 +507,7 @@ class VoxelNet(nn.Module):
                  use_norm=True,
                  use_groupnorm=False,
                  num_groups=32,
-                 use_sparse_rpn=False,
+                 use_sparse_rpn=True, # warning using sparse rpn herer
                  use_direction_classifier=True,
                  use_sigmoid_score=False,
                  encode_background_as_zeros=True,
