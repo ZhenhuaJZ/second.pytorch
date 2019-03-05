@@ -19,6 +19,7 @@ from second.pytorch.core.losses import (WeightedSigmoidClassificationLoss,
                                           WeightedSoftmaxClassificationLoss)
 from second.pytorch.models.pointpillars import PillarFeatureNet, PointPillarsScatter
 from second.pytorch.utils import get_paddings_indicator
+from second.pytorch.models import rpn
 
 
 def _get_pos_neg_loss(cls_loss, labels):
@@ -600,7 +601,8 @@ class VoxelNet(nn.Module):
                 num_rpn_input_filters = int(middle_num_filters_d2[-1] * 2)
 
         rpn_class_dict = {
-            "RPN": RPN,
+            # "RPN": RPN,
+            "RPN": rpn.SparseRPN
         }
         rpn_class = rpn_class_dict[rpn_class_name]
         self.rpn = rpn_class(
@@ -655,7 +657,10 @@ class VoxelNet(nn.Module):
         # coors: [num_voxels, 4]
         voxel_features = self.voxel_feature_extractor(voxels, num_points, coors)
         if self._use_sparse_rpn:
-            preds_dict = self.sparse_rpn(voxel_features, coors, batch_size_dev)
+            spatial_features = self.middle_feature_extractor(
+                voxel_features, coors, batch_size_dev)
+            preds_dict = self.rpn(spatial_features)
+
         else:
             spatial_features = self.middle_feature_extractor(
                 voxel_features, coors, batch_size_dev)
