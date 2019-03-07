@@ -578,9 +578,9 @@ def eigenExtractor(voxels, num_points, eigen_feature):
             eigen_matrix /= n_points
         eigen_values = np.linalg.eigvals(eigen_matrix)
         eigen_values = np.sort(eigen_values)
-        eig_2 = eigen_values[0]
+        eig_2 = eigen_values[2]
         eig_1 = eigen_values[1]
-        eig_0 = eigen_values[2]
+        eig_0 = eigen_values[0]
         # point-ness
         eigen_feature[idx,0] = eig_2
         # curve-ness
