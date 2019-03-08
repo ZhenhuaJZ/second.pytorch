@@ -67,44 +67,81 @@ class PointConvFLN(nn.Module):
     def __init__(self,
                  out_filters = [4, 8, 16],
                  kernel_size = [7, 11, 19],
-                 num_features = 4):
+                 num_features = 4,
+                 is_max_pool = True):
         super().__init__()
         Linear = change_default_args(bias=False)(nn.Linear)
         Conv1d = change_default_args(bias=False)(nn.Conv1d)
         BatchNorm1d = change_default_args(
             eps=1e-3, momentum=0.01)(nn.BatchNorm1d)
 
+        self.is_max_pool = is_max_pool
+
         self.pn_linear = Linear(num_features, 64)
         self.pn_norm = BatchNorm1d(64)
         self.pn_relu = nn.ReLU()
 
+        self.pool_linear = Linear(64, 1)
+        self.pool_bn = BatchNorm1d(100)
+        self.pool_relu = nn.ReLU()
+
         self.block1 = Sequential()
+        lo = 100
         for idx in range(len(out_filters)):
             in_filter = 1 if idx == 0 else out_filters[idx-1]
-            self.block1.add(Conv1d(in_filter, out_filter[idx], kernel_size[0]))
-            self.block1.add(BatchNorm1d(out_filter[idx]))
+            self.block1.add(Conv1d(in_filter, out_filters[idx], kernel_size[0]))
+            self.block1.add(BatchNorm1d(out_filters[idx]))
             self.block1.add(nn.ReLU())
+            lo = (lo + 2 - (kernel_size[0] - 1) - 1) + 1
+        print(lo)
+        if is_max_pool:
+            self.block1_mp = nn.MaxPool1d(82)
 
         self.block2 = Sequential()
         for idx in range(len(out_filters)):
             in_filter = 1 if idx == 0 else out_filters[idx-1]
-            self.block2.add(Conv1d(in_filter, out_filter[idx], kernel_size[1]))
-            self.block2.add(BatchNorm1d(out_filter[idx]))
+            self.block2.add(Conv1d(in_filter, out_filters[idx], kernel_size[1]))
+            self.block2.add(BatchNorm1d(out_filters[idx]))
             self.block2.add(nn.ReLU())
+            lo = (lo + 2 - (kernel_size[0] - 1) - 1)/1 + 1
 
-        self.block1 = Sequential()
+
+        self.block3 = Sequential()
         for idx in range(len(out_filters)):
             in_filter = 1 if idx == 0 else out_filters[idx-1]
-            self.block1.add(Conv1d(in_filter, out_filter[idx], kernel_size[2]))
-            self.block1.add(BatchNorm1d(out_filter[idx]))
-            self.block1.add(nn.ReLU())
+            self.block3.add(Conv1d(in_filter, out_filters[idx], kernel_size[2]))
+            self.block3.add(BatchNorm1d(out_filters[idx]))
+            self.block3.add(nn.ReLU())
+            lo = (lo + 2 - (kernel_size[0] - 1) - 1)/1 + 1
 
-    def forward(feature_):
+    def forward(self, feature_):
         feature = self.pn_linear(feature_)
         feature = self.pn_norm(feature.permute(0, 2, 1).contiguous()).permute(0, 2, 1).contiguous()
         feature = self.pn_relu(feature)
+        print("[debug] pn_relu: ", feature.shape)
 
+        feature = self.pool_linear(feature)
+        print("[debug] pool_linear: ", feature.shape)
+
+        feature = self.pool_bn(feature)
+        print("[debug] pool_bn: ", feature.shape)
+
+        feature = self.pool_relu(feature)
+        print("[debug] pool_relu: ", feature.shape)
+
+        feature = feature.permute(0,2,1).contiguous()
         feat1 = self.block1(feature)
+        print("[debug] feat1: ", feat1.shape)
+        if self.is_max_pool:
+            feat1 = self.block1_mp(feat1)
+        print("[debug] feat1: ", feat1.shape)
+
+        feat2 = self.block2(feature)
+        print("[debug] feat2: ", feat2.shape)
+
+        feat3 = self.block3(feature)
+        print("[debug] feat3: ", feat3.shape)
+
 
 
 class PointLinearFLN(nn.Module):
@@ -124,9 +161,11 @@ class PointLinearFLN(nn.Module):
         self.is_max_pool = is_max_pool
         if is_max_pool:
             kernel = out_filters[0]
-            self.fe = nn.MaxPool1d(kernel)
+            self.pool = nn.MaxPool1d(kernel)
         else:
-            self.fe = Linear(out_filters[0], 1)
+            self.pool_linear = Linear(out_filters[0], 1)
+            self.pool_bn = BatchNorm1d(100)
+            self.pool_relu = nn.ReLU()
 
         self.block = Linear(in_filters[1], out_filters[1])
         self.bn = BatchNorm1d(out_filters[1])
@@ -135,11 +174,22 @@ class PointLinearFLN(nn.Module):
 
     def forward(self, feature_):
         # feature = torch.unsqueeze(feature, -1)
+        print("#"*50)
+        # print("[debug] feature_ shape: ", feature_.shape)
+        # print("[debug] feature_: \n", feature_)
         feature = self.pn_linear(feature_)
+        # print("[debug] feature shape: ", feature.shape)
+        # print("[debug] feature: \n", feature)
+        # print("[debug] feature.permute(0, 2, 1).contiguous(): ", feature.permute(0, 2, 1).contiguous().shape)
         feature = self.pn_norm(feature.permute(0, 2, 1).contiguous()).permute(0, 2, 1).contiguous()
         feature = self.pn_relu(feature)
         # Max pool maximum or linear Feature for each point
-        feature = self.fe(feature)
+        if self.is_max_pool:
+            feature = self.pool(feature)
+        else:
+            feature = self.pool_linear(feature)
+            feature = self.pool_bn(feature)
+            feature = self.pool_relu(feature)
 
         feature = feature.permute(0, 2, 1).contiguous()
         # apply linear layer to all the points to extract point relationship
@@ -178,7 +228,7 @@ class PillarFeatureNet(nn.Module):
         self._with_distance = with_distance
 
         self.clus_layer = PointLinearFLN([num_input_features,100], [32, num_filters[0]], is_max_pool = False)
-
+        self.conv_layer = PointConvFLN(num_features = num_input_features)
         # Create PillarFeatureNet layers
         num_filters = [num_input_features] + list(num_filters)
         pfn_layers = []
@@ -228,6 +278,7 @@ class PillarFeatureNet(nn.Module):
         # for pfn in self.pfn_layers:
         #     features = pfn(features)
         features = self.clus_layer(features)
+        # features = self.conv_layer(features)
         # print(features.shape)
         return features.squeeze()
 

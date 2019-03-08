@@ -279,7 +279,7 @@ def points_to_voxel(points,
                      max_points=35,
                      reverse_index=True,
                      max_voxels=20000,
-                     dense_sample=True):
+                     dense_sample=False):
     """convert kitti points(N, >=3) to voxels. This version calculate
     everything in one loop. now it takes only 4.2ms(complete point cloud)
     with jit and 3.2ghz cpu.(don't calculate other features)
