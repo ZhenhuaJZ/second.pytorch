@@ -9,6 +9,8 @@ from torch import nn
 from torch.nn import functional as F
 import numpy as np
 from second.pytorch.utils import get_paddings_indicator
+from torchplus.nn import Empty, GroupNorm, Sequential
+
 from torchplus.nn import Empty
 from torchplus.tools import change_default_args
 
@@ -60,15 +62,58 @@ class PFNLayer(nn.Module):
             x_concatenated = torch.cat([x, x_repeat], dim=2)
             return x_concatenated
 
-class ClusterLayer(nn.Module):
+
+class PointConvFLN(nn.Module):
     def __init__(self,
-                 in_filters,
-                 out_filters,
-                 in_kernel = [],
-                 is_max_pool = True):
+                 out_filters = [4, 8, 16],
+                 kernel_size = [7, 11, 19],
+                 num_features = 4):
         super().__init__()
         Linear = change_default_args(bias=False)(nn.Linear)
         Conv1d = change_default_args(bias=False)(nn.Conv1d)
+        BatchNorm1d = change_default_args(
+            eps=1e-3, momentum=0.01)(nn.BatchNorm1d)
+
+        self.pn_linear = Linear(num_features, 64)
+        self.pn_norm = BatchNorm1d(64)
+        self.pn_relu = nn.ReLU()
+
+        self.block1 = Sequential()
+        for idx in range(len(out_filters)):
+            in_filter = 1 if idx == 0 else out_filters[idx-1]
+            self.block1.add(Conv1d(in_filter, out_filter[idx], kernel_size[0]))
+            self.block1.add(BatchNorm1d(out_filter[idx]))
+            self.block1.add(nn.ReLU())
+
+        self.block2 = Sequential()
+        for idx in range(len(out_filters)):
+            in_filter = 1 if idx == 0 else out_filters[idx-1]
+            self.block2.add(Conv1d(in_filter, out_filter[idx], kernel_size[1]))
+            self.block2.add(BatchNorm1d(out_filter[idx]))
+            self.block2.add(nn.ReLU())
+
+        self.block1 = Sequential()
+        for idx in range(len(out_filters)):
+            in_filter = 1 if idx == 0 else out_filters[idx-1]
+            self.block1.add(Conv1d(in_filter, out_filter[idx], kernel_size[2]))
+            self.block1.add(BatchNorm1d(out_filter[idx]))
+            self.block1.add(nn.ReLU())
+
+    def forward(feature_):
+        feature = self.pn_linear(feature_)
+        feature = self.pn_norm(feature.permute(0, 2, 1).contiguous()).permute(0, 2, 1).contiguous()
+        feature = self.pn_relu(feature)
+
+        feat1 = self.block1(feature)
+
+
+class PointLinearFLN(nn.Module):
+    def __init__(self,
+                 in_filters,
+                 out_filters,
+                 is_max_pool = True):
+        super().__init__()
+        Linear = change_default_args(bias=False)(nn.Linear)
         BatchNorm1d = change_default_args(
             eps=1e-3, momentum=0.01)(nn.BatchNorm1d)
 
@@ -83,11 +128,9 @@ class ClusterLayer(nn.Module):
         else:
             self.fe = Linear(out_filters[0], 1)
 
-        self.in_kernel = in_kernel
-        if len(in_kernel):
-            self.block_list = []
-        else:
-            self.block_list = Linear(in_filters[1], out_filters[1])
+        self.block = Linear(in_filters[1], out_filters[1])
+        self.bn = BatchNorm1d(out_filters[1])
+        self.relu = nn.ReLU()
 
 
     def forward(self, feature_):
@@ -95,14 +138,14 @@ class ClusterLayer(nn.Module):
         feature = self.pn_linear(feature_)
         feature = self.pn_norm(feature.permute(0, 2, 1).contiguous()).permute(0, 2, 1).contiguous()
         feature = self.pn_relu(feature)
-
+        # Max pool maximum or linear Feature for each point
         feature = self.fe(feature)
-        # for block in self.block_list:
+
         feature = feature.permute(0, 2, 1).contiguous()
-        if len(self.in_kernel):
-            x = 1
-        else:
-            feature = self.block_list(feature)
+        # apply linear layer to all the points to extract point relationship
+        feature = self.block(feature)
+        feature = self.bn(feature.permute(0, 2, 1).contiguous()).permute(0, 2, 1).contiguous()
+        feature = self.relu(feature)
         return feature
 
 
@@ -134,7 +177,7 @@ class PillarFeatureNet(nn.Module):
             num_input_features += 1
         self._with_distance = with_distance
 
-        self.clus_layer = ClusterLayer([num_input_features,100], [32, num_filters[0]], is_max_pool = False)
+        self.clus_layer = PointLinearFLN([num_input_features,100], [32, num_filters[0]], is_max_pool = False)
 
         # Create PillarFeatureNet layers
         num_filters = [num_input_features] + list(num_filters)
@@ -156,20 +199,9 @@ class PillarFeatureNet(nn.Module):
         self.y_offset = self.vy / 2 + pc_range[1]
 
     def forward(self, features, num_voxels, coors):
-        # print("*"*20)
-        # print("[debug] init Feat: ", np.unique(np.isnan(features.cpu().numpy())))
-        # Find distance of x, y, and z from cluster center
-        # print("[debug] feature shape_1: ", np.unique(np.isnan(features[:, :, :3].sum(dim=1, keepdim=True).cpu().numpy())))
-        # print("[debug] feature shape_1: ", features[:, :, :3].sum(dim=1, keepdim=True).shape)
-        # print("[debug] num_voxels shape_2: ", np.unique(np.isnan(num_voxels.type_as(features).view(-1, 1, 1).cpu().numpy())))
-        # print("[debug] num_voxels unique: ", np.unique(num_voxels.type_as(features).view(-1, 1, 1).cpu().numpy()))
-        # print("[debug] num_voxels shape: ", num_voxels.type_as(features).shape)
+
         points_mean = features[:, :, :3].sum(dim=1, keepdim=True) / num_voxels.type_as(features).view(-1, 1, 1)
-        # print("[debug] aft Mean: ",np.unique(np.isnan(features.cpu().numpy())))
         f_cluster = features[:, :, :3] - points_mean
-        # print("[debug] points_mean: ", np.unique(np.isnan(points_mean.cpu().numpy())))
-        # print("[debug] features[:, :, :3] : ", np.unique(np.isnan(features[:, :, :3].cpu().numpy())))
-        # print("[debug] aft f_cluster: ",np.unique(np.isnan(f_cluster.cpu().numpy())))
 
         # Find distance of x, y, and z from pillar center
         f_center = features[:, :, :2]
