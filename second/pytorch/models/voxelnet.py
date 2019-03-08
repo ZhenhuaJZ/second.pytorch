@@ -614,7 +614,7 @@ class VoxelNet(nn.Module):
             num_filters=rpn_num_filters,
             upsample_strides=rpn_upsample_strides,
             num_upsample_filters=rpn_num_upsample_filters,
-            num_input_filters=num_rpn_input_filters,
+            num_input_features=num_rpn_input_filters,
             num_anchor_per_loc=target_assigner.num_anchors_per_location,
             encode_background_as_zeros=encode_background_as_zeros,
             use_direction_classifier=use_direction_classifier,

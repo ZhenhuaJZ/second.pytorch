@@ -321,7 +321,7 @@ class SparseRPN(nn.Module):
                  num_filters=[128, 128, 256],
                  upsample_strides=[1, 2, 4],
                  num_upsample_filters=[256, 256, 256],
-                 num_input_filters=128,
+                 num_input_features=64,
                  num_anchor_per_loc=2,
                  encode_background_as_zeros=True,
                  use_direction_classifier=True,
