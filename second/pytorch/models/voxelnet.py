@@ -580,25 +580,25 @@ class VoxelNet(nn.Module):
             self.middle_feature_extractor = PointPillarsScatter(output_shape=output_shape,
                                                                 num_input_features=vfe_num_filters[-1])
             num_rpn_input_filters = self.middle_feature_extractor.nchannels
-        else:
-            mid_class_dict = {
-                "MiddleExtractor": MiddleExtractor,
-                "SparseMiddleExtractor": SparseMiddleExtractor,
-            }
-            mid_class = mid_class_dict[middle_class_name]
-            self.middle_feature_extractor = mid_class(
-                output_shape,
-                use_norm,
-                num_input_features=vfe_num_filters[-1],
-                num_filters_down1=middle_num_filters_d1,
-                num_filters_down2=middle_num_filters_d2)
-            if len(middle_num_filters_d2) == 0:
-                if len(middle_num_filters_d1) == 0:
-                    num_rpn_input_filters = int(vfe_num_filters[-1] * 2)
-                else:
-                    num_rpn_input_filters = int(middle_num_filters_d1[-1] * 2)
-            else:
-                num_rpn_input_filters = int(middle_num_filters_d2[-1] * 2)
+        # else:
+        #     mid_class_dict = {
+        #         "MiddleExtractor": MiddleExtractor,
+        #         "SparseMiddleExtractor": SparseMiddleExtractor,
+        #     }
+        #     mid_class = mid_class_dict[middle_class_name]
+        #     self.middle_feature_extractor = mid_class(
+        #         output_shape,
+        #         use_norm,
+        #         num_input_features=vfe_num_filters[-1],
+        #         num_filters_down1=middle_num_filters_d1,
+        #         num_filters_down2=middle_num_filters_d2)
+        #     if len(middle_num_filters_d2) == 0:
+        #         if len(middle_num_filters_d1) == 0:
+        #             num_rpn_input_filters = int(vfe_num_filters[-1] * 2)
+        #         else:
+        #             num_rpn_input_filters = int(middle_num_filters_d1[-1] * 2)
+        #     else:
+        #         num_rpn_input_filters = int(middle_num_filters_d2[-1] * 2)
 
         rpn_class_dict = {
             # "RPN": RPN,
@@ -606,6 +606,7 @@ class VoxelNet(nn.Module):
         }
         rpn_class = rpn_class_dict[rpn_class_name]
         self.rpn = rpn_class(
+            output_shape, # only use in rpn
             use_norm=True,
             num_class=num_class,
             layer_nums=rpn_layer_nums,
@@ -657,9 +658,7 @@ class VoxelNet(nn.Module):
         # coors: [num_voxels, 4]
         voxel_features = self.voxel_feature_extractor(voxels, num_points, coors)
         if self._use_sparse_rpn:
-            spatial_features = self.middle_feature_extractor(
-                voxel_features, coors, batch_size_dev)
-            preds_dict = self.rpn(spatial_features)
+            preds_dict = self.rpn(voxel_features, coors, batch_size_dev)
 
         else:
             spatial_features = self.middle_feature_extractor(

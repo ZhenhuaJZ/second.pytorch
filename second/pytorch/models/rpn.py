@@ -313,6 +313,7 @@ class RPNV2(nn.Module):
 
 class SparseRPN(nn.Module):
     def __init__(self,
+                 output_shape,
                  use_norm=True,
                  num_class=2,
                  layer_nums=[3, 5, 5],
@@ -361,19 +362,21 @@ class SparseRPN(nn.Module):
 
         # note that when stride > 1, conv2d with same padding isn't
         # equal to pad-conv2d. we should use pad-conv2d.
-        block2_input_filters = num_filters[0]
-        if use_bev:
-            self.bev_extractor = Sequential(
-                Conv2d(6, 32, 3, padding=1),
-                BatchNorm2d(32),
-                nn.ReLU(),
-                # nn.MaxPool2d(2, 2),
-                Conv2d(32, 64, 3, padding=1),
-                BatchNorm2d(64),
-                nn.ReLU(),
-                nn.MaxPool2d(2, 2),
-            )
-            block2_input_filters += 64
+        # block2_input_filters = num_filters[0]
+        # if use_bev:
+        #     self.bev_extractor = Sequential(
+        #         Conv2d(6, 32, 3, padding=1),
+        #         BatchNorm2d(32),
+        #         nn.ReLU(),
+        #         # nn.MaxPool2d(2, 2),
+        #         Conv2d(32, 64, 3, padding=1),
+        #         BatchNorm2d(64),
+        #         nn.ReLU(),
+        #         nn.MaxPool2d(2, 2),
+        #     )
+        #     block2_input_filters += 64
+        sparse_shape = output_shape[2:4]
+        self.scn_input = scn.InputLayer(2, sparse_shape.tolist())
 
         self.block1 = scn.Sequential(
             Convolution(2, num_input_features, num_filters[0], 3, layer_strides[0], False), # dimension, nIn, nOut, filter_size, filter_stride, bias
@@ -420,7 +423,7 @@ class SparseRPN(nn.Module):
                 upsample_strides[1],
                 False),
             BatchNormReLU(num_upsample_filters[1])
-
+        )
         ###########################Block 3######################################
 
         self.block3 = scn.Sequential(
@@ -442,7 +445,7 @@ class SparseRPN(nn.Module):
                 upsample_strides[2],
                 False),
             BatchNormReLU(num_upsample_filters[2])
-
+        )
         if encode_background_as_zeros:
             num_cls = num_anchor_per_loc * num_class
         else:
@@ -454,7 +457,10 @@ class SparseRPN(nn.Module):
             self.conv_dir_cls = nn.Conv2d(
                 sum(num_upsample_filters), num_anchor_per_loc * 2, 1)
 
-    def forward(self, x, bev=None):
+    def forward(self, voxel_features, coors, batch_size, bev=None):
+
+        coors = coors.int()[:,[2,3,0]]
+        x = self.scn_input((coors, voxel_features, batch_size))
         x = self.block1(x)
         up1 = self.deconv1(x)
         if self._use_bev:
