@@ -330,7 +330,7 @@ class SparseRPN(nn.Module):
                  use_bev=False,
                  box_code_size=7,
                  name='rpn'):
-        super(RPN, self).__init__()
+        super(SparseRPN, self).__init__()
         self._num_anchor_per_loc = num_anchor_per_loc
         self._use_direction_classifier = use_direction_classifier
         self._use_bev = use_bev
