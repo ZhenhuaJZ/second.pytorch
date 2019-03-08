@@ -60,6 +60,51 @@ class PFNLayer(nn.Module):
             x_concatenated = torch.cat([x, x_repeat], dim=2)
             return x_concatenated
 
+class ClusterLayer(nn.Module):
+    def __init__(self,
+                 in_filters,
+                 out_filters,
+                 in_kernel = [],
+                 is_max_pool = True):
+        super().__init__()
+        Linear = change_default_args(bias=False)(nn.Linear)
+        Conv1d = change_default_args(bias=False)(nn.Conv1d)
+        BatchNorm1d = change_default_args(
+            eps=1e-3, momentum=0.01)(nn.BatchNorm1d)
+
+        self.pn_linear = Linear(in_filters[0], out_filters[0])
+        self.pn_norm = BatchNorm1d(out_filters[0])
+        self.pn_relu = nn.ReLU()
+
+        self.is_max_pool = is_max_pool
+        if is_max_pool:
+            kernel = out_filters[0]
+            self.fe = nn.MaxPool1d(kernel)
+        else:
+            self.fe = Linear(out_filters[0], 1)
+
+        self.in_kernel = in_kernel
+        if len(in_kernel):
+            self.block_list = []
+        else:
+            self.block_list = Linear(in_filters[1], out_filters[1])
+
+
+    def forward(self, feature_):
+        # feature = torch.unsqueeze(feature, -1)
+        feature = self.pn_linear(feature_)
+        feature = self.pn_norm(feature.permute(0, 2, 1).contiguous()).permute(0, 2, 1).contiguous()
+        feature = self.pn_relu(feature)
+
+        feature = self.fe(feature)
+        # for block in self.block_list:
+        feature = feature.permute(0, 2, 1).contiguous()
+        if len(self.in_kernel):
+            x = 1
+        else:
+            feature = self.block_list(feature)
+        return feature
+
 
 class PillarFeatureNet(nn.Module):
     def __init__(self,
@@ -88,6 +133,8 @@ class PillarFeatureNet(nn.Module):
         if with_distance:
             num_input_features += 1
         self._with_distance = with_distance
+
+        self.clus_layer = ClusterLayer([num_input_features,100], [32, num_filters[0]], is_max_pool = False)
 
         # Create PillarFeatureNet layers
         num_filters = [num_input_features] + list(num_filters)
@@ -146,9 +193,10 @@ class PillarFeatureNet(nn.Module):
         features *= mask
         # Forward pass through PFNLayers
         # print(np.unique(np.isnan(features.cpu().numpy())))
-        for pfn in self.pfn_layers:
-            features = pfn(features)
-        # print(features)
+        # for pfn in self.pfn_layers:
+        #     features = pfn(features)
+        features = self.clus_layer(features)
+        # print(features.shape)
         return features.squeeze()
 
 
