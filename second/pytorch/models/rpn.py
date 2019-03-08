@@ -375,7 +375,7 @@ class SparseRPN(nn.Module):
         #         nn.MaxPool2d(2, 2),
         #     )
         #     block2_input_filters += 64
-        sparse_shape = output_shape[2:4]
+        sparse_shape = np.array(output_shape)[2:4]
         self.scn_input = scn.InputLayer(2, sparse_shape.tolist())
 
         self.block1 = scn.Sequential(
