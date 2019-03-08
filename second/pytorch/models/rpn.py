@@ -351,14 +351,17 @@ class SparseRPN(nn.Module):
             else:
                 BatchNormReLU = change_default_args(
                     eps=1e-3, momentum=0.01)(scn.BatchNormReLU)
+                    
             Convolution = change_default_args(bias=False)(scn.Convolution)
             Deconvolution = change_default_args(bias=False)(
                 scn.Deconvolution)
-        else:
-            BatchNormReLU = Empty
-            Convolution = change_default_args(bias=True)(scn.Convolution)
-            Deconvolution = change_default_args(bias=True)(
-                scn.Deconvolution)
+            SubmanifoldConvolution = change_default_args(bias=False)(
+                scn.SubmanifoldConvolution)
+        # else:
+        #     BatchNormReLU = Empty
+        #     Convolution = change_default_args(bias=True)(scn.Convolution)
+        #     Deconvolution = change_default_args(bias=True)(
+        #         scn.Deconvolution)
 
         # note that when stride > 1, conv2d with same padding isn't
         # equal to pad-conv2d. we should use pad-conv2d.
