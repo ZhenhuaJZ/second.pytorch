@@ -17,7 +17,7 @@ model: {
         padding: [1, 1, 0]
       }
       module_class_name: "PillarFeatureNet"
-      num_filters: [64]
+      num_filters: [48]
       with_distance: false
     }
     middle_feature_extractor: {
