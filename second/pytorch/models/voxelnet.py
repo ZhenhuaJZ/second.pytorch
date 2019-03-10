@@ -578,33 +578,36 @@ def eigenExtractor(voxels, num_points, eigen_feature):
             eigen_matrix /= n_points
         eigen_values = np.linalg.eigvals(eigen_matrix)
         eigen_values = np.sort(eigen_values)
-        eig_2 = eigen_values[2]
-        eig_1 = eigen_values[1]
-        eig_0 = eigen_values[0]
-        # point-ness
-        eigen_feature[idx,0] = eig_2
-        # curve-ness
-        eigen_feature[idx,1] = eig_0-eig_1
-        # surface-ness
-        eigen_feature[idx,2] = eig_1-eig_0
-        # Linearity L
-        # eigen_feature[idx,3] = (eig_0-eig_1)/eig_0
-        # # Planarity P
-        # eigen_feature[idx,4] = (eig_1-eig_2)/eig_0
-        # # Sphericity S
-        # eigen_feature[idx,5] = eig_2/eig_0
-        # # Omnivariance O
-        # eigen_feature[idx,6] = (eig_0*eig_1*eig_2)**1/3
-        # # Anisotropy A
-        # eigen_feature[idx,7] = (eig_0-eig_2)/eig_0
-        # # Eigenentropy E
-        # eigen_feature[idx,8] = -eig_0*math.log(eig_0)-eig_1*math.log(eig_1)-eig_2*math.log(eig_2)
-        # # Sum
-        # eigen_feature[idx,9] = eig_0 + eig_1 + eig_2
-        # # Local surface variance
-        # eigen_feature[idx,10] = eig_2/(eig_0+eig_1+eig_2)
-        # # Obtain eigen value from covariance matrix
-
+        print(eigen_values)
+        if (eigen_values == 0).all():
+            eigen_feature[idx] = 0
+        else:
+            eig_2 = eigen_values[2]
+            eig_1 = eigen_values[1]
+            eig_0 = eigen_values[0]
+            # point-ness
+            eigen_feature[idx,0] = eig_2
+            # curve-ness
+            eigen_feature[idx,1] = eig_0-eig_1
+            # surface-ness
+            eigen_feature[idx,2] = eig_1-eig_0
+            # Linearity L
+            eigen_feature[idx,3] = (eig_0-eig_1)/eig_0 if eig_0 != 0 else 0
+            # # Planarity P
+            eigen_feature[idx,4] = (eig_1-eig_2)/eig_0 if eig_0 != 0 else 0
+            # # Sphericity S
+            eigen_feature[idx,5] = eig_2/eig_0 if eig_0 != 0 else 0
+            # # Omnivariance O
+            eigen_feature[idx,6] = (eig_0*eig_1*eig_2)**1/3
+            # # Anisotropy A
+            eigen_feature[idx,7] = (eig_0-eig_2)/eig_0 if eig_0 != 0 else 0
+            # # Eigenentropy E
+            eigen_feature[idx,8] = -eig_0*math.log(eig_0)-eig_1*math.log(eig_1)-eig_2*math.log(eig_2) if (eigen_values == 0).any() else 0
+            # # Sum
+            eigen_feature[idx,9] = eig_0 + eig_1 + eig_2
+            # # Local surface variance
+            eigen_feature[idx,10] = eig_2/(eig_0+eig_1+eig_2)
+            # # Obtain eigen value from covariance matrix
     return eigen_feature
 
 @numba.jit(nopython=True)
@@ -784,7 +787,7 @@ class VoxelNet(nn.Module):
 
         self.descriptor_feature_name = descriptor_feature_name
         if descriptor_feature_name == "eigenValueDescriptor":
-            num_features = 3
+            num_features = 11
             self.descriptor_feature = eigenValueDescriptor(num_features)
             extra_feat_num += num_features
 
