@@ -578,7 +578,6 @@ def eigenExtractor(voxels, num_points, eigen_feature):
             eigen_matrix /= n_points
         eigen_values = np.linalg.eigvals(eigen_matrix)
         eigen_values = np.sort(eigen_values)
-        print(eigen_values)
         if (eigen_values == 0).all():
             eigen_feature[idx] = 0
         else:
@@ -602,7 +601,7 @@ def eigenExtractor(voxels, num_points, eigen_feature):
             # # Anisotropy A
             eigen_feature[idx,7] = (eig_0-eig_2)/eig_0 if eig_0 != 0 else 0
             # # Eigenentropy E
-            eigen_feature[idx,8] = -eig_0*math.log(eig_0)-eig_1*math.log(eig_1)-eig_2*math.log(eig_2) if (eigen_values == 0).any() else 0
+            eigen_feature[idx,8] = -eig_0*math.log(eig_0)-eig_1*math.log(eig_1)-eig_2*math.log(eig_2) if (eigen_values > 0).all() else 0
             # # Sum
             eigen_feature[idx,9] = eig_0 + eig_1 + eig_2
             # # Local surface variance
