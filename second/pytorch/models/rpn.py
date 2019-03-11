@@ -392,20 +392,31 @@ class SparseRPN(nn.Module):
             self.block1.add(BatchNormReLU(num_filters[0]))
 
         # dimension, nIn, nOut, filter_size, filter_stride, bias
-        self.deconv1 = scn.Sequential(
-            # scn.SparseToDense(2, num_filters[0]),
-            Deconvolution(
-                2,
-                num_filters[0],
-                num_upsample_filters[0],
-                upsample_strides[0],
-                upsample_strides[0],
-                False),
-            BatchNormReLU(num_upsample_filters[0]),
+        # self.deconv1 = scn.Sequential(
+        #     # scn.SparseToDense(2, num_filters[0]),
+        #     Deconvolution(
+        #         2,
+        #         num_filters[0],
+        #         num_upsample_filters[0],
+        #         upsample_strides[0],
+        #         upsample_strides[0],
+        #         False),
+        #     BatchNormReLU(num_upsample_filters[0]),
+        #
+        #     # scn.OutputLayer(3) # not sure
+        #     scn.SparseToDense(2, num_upsample_filters[0]) # not sure
+        #     # scn.OutputLayer(2)
+        # )
 
-            # scn.OutputLayer(3) # not sure
-            scn.SparseToDense(2, num_upsample_filters[0]) # not sure
-            # Squeeze()
+        self.deconv1 = scn.SparseToDense(2, num_filters[0])
+        self.norm_dec1 = Sequential(
+            nn.ConvTranspose2d(
+                    num_filters[0],
+                    num_upsample_filters[0],
+                    upsample_strides[0],
+                    stride=upsample_strides[0], bias=False),
+            nn.BatchNorm2d(num_upsample_filters[0]),
+            nn.ReLU()
         )
 
         ###########################Block 2######################################
@@ -420,18 +431,30 @@ class SparseRPN(nn.Module):
             self.block2.add(BatchNormReLU(num_filters[1]))
 
         # dimension, nIn, nOut, filter_size, filter_stride, bias
-        self.deconv2 = scn.Sequential(
-            # scn.SparseToDense(2, num_filters[1]),
-            Deconvolution(
-                2,
-                num_filters[1],
-                num_upsample_filters[1],
-                upsample_strides[1],
-                upsample_strides[1],
-                False),
-            BatchNormReLU(num_upsample_filters[1]),
-            scn.SparseToDense(2, num_upsample_filters[1])
+        # self.deconv2 = scn.Sequential(
+        #     # scn.SparseToDense(2, num_filters[1]),
+        #     Deconvolution(
+        #         2,
+        #         num_filters[1],
+        #         num_upsample_filters[1],
+        #         upsample_strides[1],
+        #         upsample_strides[1],
+        #         False),
+        #     BatchNormReLU(num_upsample_filters[1]),
+        #     scn.SparseToDense(2, num_upsample_filters[1])
+        # )
+        #
+        self.deconv2 = scn.SparseToDense(2, num_filters[1])
+        self.norm_dec2 = Sequential(
+            nn.ConvTranspose2d(
+                    num_filters[1],
+                    num_upsample_filters[1],
+                    upsample_strides[1],
+                    stride=upsample_strides[1], bias=False),
+            nn.BatchNorm2d(num_upsample_filters[1]),
+            nn.ReLU()
         )
+
         ###########################Block 3######################################
 
         self.block3 = scn.Sequential(
@@ -445,17 +468,28 @@ class SparseRPN(nn.Module):
             self.block3.add(BatchNormReLU(num_filters[2]))
 
         # dimension, nIn, nOut, filter_size, filter_stride, bias
-        self.deconv3 = scn.Sequential(
-            # scn.SparseToDense(2, num_filters[2]),
-            Deconvolution(
-                2,
-                num_filters[2],
-                num_upsample_filters[2],
-                upsample_strides[2],
-                upsample_strides[2],
-                False),
-            BatchNormReLU(num_upsample_filters[2]),
-            scn.SparseToDense(2, num_upsample_filters[2])
+        # self.deconv3 = scn.Sequential(
+        #     # scn.SparseToDense(2, num_filters[2]),
+        #     Deconvolution(
+        #         2,
+        #         num_filters[2],
+        #         num_upsample_filters[2],
+        #         upsample_strides[2],
+        #         upsample_strides[2],
+        #         False),
+        #     BatchNormReLU(num_upsample_filters[2]),
+        #     scn.SparseToDense(2, num_upsample_filters[2])
+        # )
+
+        self.deconv3 = scn.SparseToDense(2, num_filters[2])
+        self.norm_dec3 = Sequential(
+            nn.ConvTranspose2d(
+                    num_filters[2],
+                    num_upsample_filters[2],
+                    upsample_strides[2],
+                    stride=upsample_strides[2], bias=False),
+            nn.BatchNorm2d(num_upsample_filters[2]),
+            nn.ReLU()
         )
 
         # self.post = Sequential(
@@ -481,19 +515,19 @@ class SparseRPN(nn.Module):
         else:
             num_cls = num_anchor_per_loc * (num_class + 1)
 
-        # self.conv_cls = nn.Conv2d(sum(num_upsample_filters), num_cls, 1)
-        # self.conv_box = nn.Conv2d(
-        #     sum(num_upsample_filters), num_anchor_per_loc * box_code_size, 1)
-        # if use_direction_classifier:
-        #     self.conv_dir_cls = nn.Conv2d(
-        #         sum(num_upsample_filters), num_anchor_per_loc * 2, 1)
-
-        self.conv_cls = nn.Conv2d(128, num_cls, 1)
+        self.conv_cls = nn.Conv2d(sum(num_upsample_filters), num_cls, 1)
         self.conv_box = nn.Conv2d(
-            128, num_anchor_per_loc * box_code_size, 1)
+            sum(num_upsample_filters), num_anchor_per_loc * box_code_size, 1)
         if use_direction_classifier:
             self.conv_dir_cls = nn.Conv2d(
-                128, num_anchor_per_loc * 2, 1)
+                sum(num_upsample_filters), num_anchor_per_loc * 2, 1)
+
+        # self.conv_cls = nn.Conv2d(128, num_cls, 1)
+        # self.conv_box = nn.Conv2d(
+        #     128, num_anchor_per_loc * box_code_size, 1)
+        # if use_direction_classifier:
+        #     self.conv_dir_cls = nn.Conv2d(
+        #         128, num_anchor_per_loc * 2, 1)
 
     def forward(self, voxel_features, coors, batch_size, bev=None):
 
@@ -501,22 +535,24 @@ class SparseRPN(nn.Module):
         coors = coors.int()[:,[2,3,0]]
         # print(coors)
         # print(len((coors, voxel_features, batch_size)))
-        print("============================")
+        # print("============================")
         sx = self.scn_input((coors.cpu(), voxel_features, batch_size))
-        print(sx.features.shape)
+        # print(sx.features.shape)
         x1 = self.block1(sx)
         x2 = self.block2(x1)
         x3 = self.block3(x2)
-        print("block-1",x1.features.shape)
-        print("block-2",x2.features.shape)
-        print("block-3",x3.features.shape)
-        print("block-3 - c",x3)
+        # print("block-1",x1.features.shape)
+        # print("block-2",x2.features.shape)
+        # print("block-3",x3.features.shape)
         up1 = self.deconv1(x1)
+        up1 = self.norm_dec1(up1)
+        # print("up-1",up1.shape)
         up2 = self.deconv2(x2)
+        up2 = self.norm_dec2(up2)
+        # print("up-2",up2.shape)
         up3 = self.deconv3(x3)
-        print("up-1",up1.shape)
-        print("up-2",up2.shape)
-        print("up-3",up3.shape)
+        up3 = self.norm_dec3(up3)
+        # print("up-3",up3.shape)
 
         # x = self.block1(x)
         # print("block-1",x.features.shape)
@@ -532,9 +568,9 @@ class SparseRPN(nn.Module):
         # print("up-2",up2.shape)
         # print("up-3",up3.shape)
 
-        x = torch.cat([up1], dim=1)
+        x = torch.cat([up1,up2,up3], dim=1)
         # x = self.post(x)
-        print("concat shape", x.shape)
+        # print("concat shape", x.shape)
         box_preds = self.conv_box(x)
         cls_preds = self.conv_cls(x)
         # [N, C, y(H), x(W)]
