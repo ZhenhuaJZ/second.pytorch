@@ -457,25 +457,43 @@ class SparseRPN(nn.Module):
             BatchNormReLU(num_upsample_filters[2]),
             scn.SparseToDense(2, num_upsample_filters[2])
         )
+
+        # self.post = Sequential(
+        #             nn.Conv2d(
+        #                 sum(num_upsample_filters),
+        #                 128,
+        #                 3,
+        #                 stride=1,padding=1),
+        #             nn.BatchNorm2d(128),
+        #             nn.ReLU(),
+        #             nn.Conv2d(
+        #                 128,
+        #                 64,
+        #                 3,
+        #                 stride=1,padding=1),
+        #             nn.BatchNorm2d(64),
+        #             nn.ReLU(),
+        #
+        # ) # [1, 200, 176]
+
         if encode_background_as_zeros:
             num_cls = num_anchor_per_loc * num_class
         else:
             num_cls = num_anchor_per_loc * (num_class + 1)
 
-        ### test
-        self.conv_cls = nn.Conv2d(256, num_cls, 1)
-        self.conv_box = nn.Conv2d(
-            256, num_anchor_per_loc * box_code_size, 1)
-        if use_direction_classifier:
-            self.conv_dir_cls = nn.Conv2d(
-                256, num_anchor_per_loc * 2, 1)
-
         # self.conv_cls = nn.Conv2d(sum(num_upsample_filters), num_cls, 1)
         # self.conv_box = nn.Conv2d(
-            # sum(num_upsample_filters), num_anchor_per_loc * box_code_size, 1)
+        #     sum(num_upsample_filters), num_anchor_per_loc * box_code_size, 1)
         # if use_direction_classifier:
         #     self.conv_dir_cls = nn.Conv2d(
         #         sum(num_upsample_filters), num_anchor_per_loc * 2, 1)
+
+        self.conv_cls = nn.Conv2d(128, num_cls, 1)
+        self.conv_box = nn.Conv2d(
+            128, num_anchor_per_loc * box_code_size, 1)
+        if use_direction_classifier:
+            self.conv_dir_cls = nn.Conv2d(
+                128, num_anchor_per_loc * 2, 1)
 
     def forward(self, voxel_features, coors, batch_size, bev=None):
 
@@ -484,21 +502,38 @@ class SparseRPN(nn.Module):
         # print(coors)
         # print(len((coors, voxel_features, batch_size)))
         print("============================")
-        x = self.scn_input((coors.cpu(), voxel_features, batch_size))
-        print(x.features.shape)
-        x1 = self.block1(x)
+        sx = self.scn_input((coors.cpu(), voxel_features, batch_size))
+        print(sx.features.shape)
+        x1 = self.block1(sx)
         x2 = self.block2(x1)
         x3 = self.block3(x2)
         print("block-1",x1.features.shape)
         print("block-2",x2.features.shape)
         print("block-3",x3.features.shape)
+        print("block-3 - c",x3)
         up1 = self.deconv1(x1)
         up2 = self.deconv2(x2)
         up3 = self.deconv3(x3)
         print("up-1",up1.shape)
         print("up-2",up2.shape)
         print("up-3",up3.shape)
-        x = torch.cat([up1, up2, up3], dim=1)
+
+        # x = self.block1(x)
+        # print("block-1",x.features.shape)
+        # up1 = self.deconv1(x)
+        # x = self.block2(x)
+        # print("block-2",x.features.shape)
+        # up2 = self.deconv2(x)
+        # x = self.block3(x)
+        # print("block-3",x.features.shape)
+        # up3 = self.deconv3(x)
+        #
+        # print("up-1",up1.shape)
+        # print("up-2",up2.shape)
+        # print("up-3",up3.shape)
+
+        x = torch.cat([up1], dim=1)
+        # x = self.post(x)
         print("concat shape", x.shape)
         box_preds = self.conv_box(x)
         cls_preds = self.conv_cls(x)
