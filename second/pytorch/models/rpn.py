@@ -382,8 +382,8 @@ class SparseRPN(nn.Module):
         self.scn_input = scn.InputLayer(2, sparse_shape.tolist())
 
         self.block1 = scn.Sequential(
-            nn.ZeroPad2d(0)
-            Convolution(2, num_input_features, num_filters[0], 3, layer_strides[0], False), # dimension, nIn, nOut, filter_size, filter_stride, bias
+            # nn.ZeroPad2d(1),
+            Convolution(2, num_input_features, num_filters[0], 2, layer_strides[0], False), # dimension, nIn, nOut, filter_size, filter_stride, bias
             BatchNormReLU(num_filters[0]))
 
         for i in range(layer_nums[0]):
@@ -410,8 +410,8 @@ class SparseRPN(nn.Module):
 
         ###########################Block 2######################################
         self.block2 = scn.Sequential(
-            nn.ZeroPad2d(0)
-            Convolution(2, num_filters[0], num_filters[1], 3, layer_strides[1], False), # dimension, nIn, nOut, filter_size, filter_stride, bias
+            # nn.ZeroPad2d(0),
+            Convolution(2, num_filters[0], num_filters[1], 2, layer_strides[1], False), # dimension, nIn, nOut, filter_size, filter_stride, bias
             BatchNormReLU(num_filters[1]))
 
         for i in range(layer_nums[1]):
@@ -435,8 +435,8 @@ class SparseRPN(nn.Module):
         ###########################Block 3######################################
 
         self.block3 = scn.Sequential(
-            nn.ZeroPad2d(0)
-            Convolution(2, num_filters[1], num_filters[2], 3, layer_strides[2], False), # dimension, nIn, nOut, filter_size, filter_stride, bias
+            # nn.ZeroPad2d(0),
+            Convolution(2, num_filters[1], num_filters[2], 2, layer_strides[2], False), # dimension, nIn, nOut, filter_size, filter_stride, bias
             BatchNormReLU(num_filters[2]))
 
         for i in range(layer_nums[2]):
@@ -498,7 +498,8 @@ class SparseRPN(nn.Module):
         print("up-1",up1.shape)
         print("up-2",up2.shape)
         print("up-3",up3.shape)
-        x = torch.cat([up1, up2], dim=1)
+        x = torch.cat([up1, up2, up3], dim=1)
+        print("concat shape", x.shape)
         box_preds = self.conv_box(x)
         cls_preds = self.conv_cls(x)
         # [N, C, y(H), x(W)]
